@@ -16,83 +16,107 @@ Il workflow applica rigorosamente i **Criteri CCI** (Chiarezza Clinica Integrata
 
 | File | Ruolo | Linee |
 |------|-------|-------|
-| **orchestrator.txt** | Motore workflow v4.5: generazione diretta Notion, validazione CCI interna, pitch rich_text | ~832 |
+| **orchestrator.txt** | Motore workflow v4.6: 3 gruppi (A/B/C), interfaccia elegante, output minimale | ~835 |
 | **istruzioni.txt** | Custom instructions: CCI, vincoli fonte, limiti cognitivi, validazione | ~154 |
 
-## Workflow Completo (v4.5)
+## Workflow Completo (v4.6)
 
-### BLOCCO 1: AUTOMATICO (~30-40 min)
+### Gruppo A - Contenuto Notion (~35-45 min)
+
+Esecuzione automatica fasi 1-5
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
 | **1** | Traccia | Struttura H2/H3 in chat | 5-10 min |
-| **2** | Pagina Notion + Callout | **Generazione diretta su Notion** (5-7 callout automatici, validazione CCI interna) | 15-25 min |
-| **3** | Diagramma Mermaid | Inserito su Notion (append blocks) | 2-3 min |
-| **4** | Pitch Rich Text | Update property con grassetto formattato | 2-3 min |
+| **2** | Pagina + Callout | Generazione diretta su Notion (5-7 callout automatici, CCI interno) | 15-25 min |
+| **3** | Diagramma | Inserito su Notion (append blocks) | 2-3 min |
+| **4** | Pitch + Status | Property Pitch con grassetto + Status "Attivo" | 2-3 min |
+| **5** | Complessità + Tempo | Calcolo automatico e update properties | 1-2 min |
 
-**Esecuzione automatica** senza pause fino a Fase 4
+**Output finale**: Contenuto studiabile completo su Notion
 
-**[PAUSA OBBLIGATORIA 1]** Digita "continua" per Anki o "ferma"
+**[Pausa A]** - Digita 'continua' per Anki o 'ferma'
 
-### BLOCCO 2: Anki (~5-8 min)
+---
 
-| Fase | Nome | Output | Tempo |
-|------|------|--------|-------|
-| **5** | Anki CORE | **FILE anki_deck.txt generato** (max 25 carte) | 5-8 min |
+### Gruppo B - Anki (~5-8 min)
 
-**[PAUSA OBBLIGATORIA 2]** Digita "continua" per Proprietà o "ferma"
-
-### BLOCCO 3: Proprietà (~3-5 min)
+Esecuzione dopo "continua"
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **6** | Proprietà + DB Voci | Estrazione termini, batch processing, calcolo Complessità/Tempo | 3-5 min |
+| **6** | Anki deck | FILE anki_deck.txt (max 25 carte CORE) | 5-8 min |
 
-**[PAUSA OBBLIGATORIA 3]** Digita "continua" per Link (opzionale) o "ferma"
+**Output finale**: File anki_deck.txt generato
 
-### BLOCCO 4: Link (~3-5 min, opzionale)
+**[Pausa B]** - Digita 'continua' per proprietà DB o 'ferma'
+
+---
+
+### Gruppo C - Database (~3-5 min)
+
+Esecuzione dopo "continua"
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **7** | Link Automatici | Ricerca argomenti correlati (score ≥2), creazione pagine collegamento | 3-5 min |
+| **7** | Proprietà Voci | Estrazione termini, batch processing DB, relazioni Voci→Argomenti | 3-5 min |
 
-**Tempo totale**: 50-60 min
+**Output finale**: Database aggiornato, workflow completato
 
-## Funzionalità Chiave (v4.5)
+**[Fine]** - Opzionale: Digita 'continua' per link automatici
 
-### 1. **Generazione Diretta su Notion (zero output lungo in chat)**
+---
+
+### Opzionale - Link (~3-5 min)
+
+Esecuzione solo se richiesto dopo Gruppo C
+
+| Fase | Nome | Output | Tempo |
+|------|------|--------|-------|
+| **8** | Link automatici | Ricerca correlazioni (score ≥2), creazione pagine collegamento | 3-5 min |
+
+**Tempo totale**: 45-60 min
+
+## Funzionalità Chiave (v4.6)
+
+### 1. **Workflow a 3 Gruppi con Pause Strategiche**
+- **Gruppo A**: Contenuto studiabile completo (Traccia→Pagina→Diagramma→Pitch→Tempo)
+- **Gruppo B**: Anki deck isolato (esecuzione separata dopo conferma)
+- **Gruppo C**: Database linking (Voci→Argomenti via relazioni)
+- **Opzionale**: Link automatici proposti dopo Gruppo C
+- Pause dopo ogni gruppo per controllo utente
+
+### 2. **Interfaccia Elegante e Minimale**
+- Output pulito: no CAPS (eccetto sigle CCI), no === spam
+- Info essenziale: solo risultato + metriche brevi
+- Esempio output: `Pagina pubblicata: [URL] | [N] parole | CCI: PASS | Callout: [N]`
+- Comunicazione chiara con simboli tree: `├─` e `└─`
+
+### 3. **Generazione Diretta su Notion**
 - Fase 2: genera pagina DIRETTAMENTE su Notion in memoria
-- Validazione CCI INTERNA dopo ogni H2 (no simulazione, no output chat)
-- Callout 5-7 inseriti AUTOMATICAMENTE durante generazione
-- Output chat conciso: "Pagina pubblicata (N parole, CCI: PASS, Callout: N)"
+- Validazione CCI interna dopo ogni H2 (no simulazione, no output chat)
+- Callout 5-7 inseriti automaticamente durante generazione
 - Elimina duplicazione lavoro e lunghezza chat
 
-### 2. **Scratchpad System + Oneshot Automatico**
-- Tracking stato workflow in memoria (fase corrente, outputs salvati, validation)
-- Esecuzione automatica BLOCCO 1 (fasi 1-4) senza interruzioni
-- Pause obbligatorie dopo Fase 4, Fase 5, Fase 6
-- Comando "status" per visibilità real-time
-- Auto-avanzamento tra fasi fino a pubblicazione
+### 4. **Pitch con Grassetto Markdown**
+- Fase 4: pitch property come text semplice
+- UNA frase in grassetto: `**testo decisivo**` (Markdown)
+- Notion mantiene grassetto ** ** nella property
+- Fix: formato Notion-flavored Markdown ufficiale
 
-### 3. **Pitch Rich Text (formattazione grassetto preservata)**
-- Fase 4: pitch property come rich_text (non plain text)
-- Mantiene UNA frase in grassetto (mossa decisiva)
-- API format: array con annotations `{"bold": true}`
-- Fix critico: grassetto visibile su Notion
-
-### 4. **File Anki Generato (non output chat)**
-- Fase 5: genera FILE `anki_deck.txt` nel progetto
+### 5. **File Anki Generato**
+- Fase 6: genera FILE `anki_deck.txt` nel progetto
 - Max 25 carte CORE con singola c1
-- Anti-confusori automatici (5 pattern)
-- Comunicazione chat: solo "File anki_deck.txt generato (N carte)"
+- Anti-confusori automatici (5 pattern sistematici)
+- Output chat minimale: `File generato: anki_deck.txt ([N] carte CORE)`
 
-### 5. **CCI Enforcement**
+### 6. **CCI Enforcement**
 - Validazione incrementale dopo ogni H2 generato
 - Conteggi strict: max 18 parole/frase (threshold rigido, non media)
-- Auto-check finale: se ≥2 fail → autocorreggi (max 1 iterazione)
 - Pitch: validazione automatica 170-200 parole
+- Auto-correzione interna se necessario
 
-### 6. **Anti-confusori Anki**
+### 7. **Anti-confusori Anki**
 Pattern sistematici per evitare interferenza tra carte:
 - **Età/popolazione**: "nel *neonato*" vs "nell'*adulto* >65 anni"
 - **Temporalità**: "fase *acuta* (<72h)" vs "fase *cronica* (>3 mesi)"
@@ -386,7 +410,18 @@ Collegamenti creati: 3
 
 ## Changelog Versioni
 
-### v4.5 (Optimized) - Corrente
+### v4.6 (Clean Interface) - Corrente
+- **RIORGANIZZATO**: 3 gruppi logici (A: Contenuto, B: Anki, C: Database) + 1 opzionale
+- **RINUMERATO**: 8 fasi totali (5+1+1+1 opzionale)
+- **SPOSTATO**: Complessità + Tempo da Fase 6 a nuova Fase 5 (fine Gruppo A)
+- **SEPARATO**: Status+Tempo (Gruppo A) da Voci (Gruppo C)
+- **PULITO**: interfaccia elegante (no CAPS eccetto sigle, no === spam)
+- **MINIMIZZATO**: output solo risultato + info breve
+- **PAUSE STRATEGICHE**: 3 pause (fine A, fine B, fine C) per controllo utente
+- **TIMING**: ottimizzato 45-60 min totale
+- **MANTENUTO**: tutto il dettaglio tecnico e validazione da v4.5
+
+### v4.5 (Optimized)
 - **SEMPLIFICATO**: 7 fasi (da 9) - workflow più lineare
 - **OTTIMIZZATO**: generazione diretta su Notion (no output lungo in chat)
 - **AGGIUNTO**: validazione CCI interna in memoria (no simulazione)

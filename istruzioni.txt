@@ -86,7 +86,7 @@ mode=comparativo
 | Pilastri H2 | 4-6 | Optimal chunking |
 | Domande ❓ | 5-7 | Spaced retrieval |
 | Chiarimenti | 3-5 | No overlap domande |
-| Anki finale | 35-50 | 15-20 min review/die |
+| Anki CORE | max 25 | High-yield essentials only |
 | Paragrafi | 2-4 frasi | Readability |
 
 ## FORMATO OUTPUT

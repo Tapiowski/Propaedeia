@@ -1,10 +1,10 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v2.5 con Database Unificato Voci)
+# ORCHESTRATOR - Sistema Studio Medicina (v3.0 Anki-Optimized)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto che includono:
 > - **CCI** (Chiarezza Clinica Integrata): main message first, frasi <=18 parole, numeri con unità, voce attiva
 > - **Vincoli fonte**: SOLO file progetto per contenuti clinici; eccezioni ammesse per acronimi standard e anatomia base
 > - **Stile**: italiano medico standard, coerenza terminologica, NO meta-frasi ("Ecco il risultato...")
-> - **Limiti cognitivi**: Callout 3-5, Pilastri H2 4-6, Domande 5-7, Chiarimenti 3-5, Anki 35-50
+> - **Limiti cognitivi**: Callout 3-5, Pilastri H2 4-6, Domande 5-7, Chiarimenti 3-5, Anki CORE max 25
 > - **Validazione incrementale**: auto-check CCI dopo ogni H2 (se >=2 fail -> autocorreggi)
 > - **Formato output**: stampa SOLO contenuto richiesto, zero testo introduttivo
 
@@ -56,7 +56,7 @@ Quale processare per questo workflow?
 **Trigger**: Utente scrive "workflow completo" O allega sbobina senza specificare
 
 **Fasi**: 9 (STRUTTURA -> VALIDAZIONE -> SINTESI -> REVIEW ATTIVO -> PUBBLICAZIONE -> LINKING)
-**Tempo totale**: ~70 min
+**Tempo totale**: ~60-65 min
 
 **Sequenza**:
 ```
@@ -65,7 +65,7 @@ Quale processare per questo workflow?
 2a. CALLOUT (3-5 min)
 3a. ELEVATOR PITCH (2-3 min)
 3b. PROPRIETÀ + VALUTAZIONE (2-3 min)
-4a. ANKI (10-15 min)
+4a. ANKI CORE (5-8 min) ← max 25 carte, output .txt
 4b. DIAGRAMMA (3-5 min)
 5.  PUBBLICAZIONE NOTION (3-5 min) ← UPDATE pagina + proprietà
     5a. Import veloce content (2-3 min)
@@ -272,20 +272,16 @@ Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
-### FASE 4a: ANKI
+### FASE 4a: ANKI CORE
 
-**Obiettivo**: 35-50 flashcard atomiche con singola cloze per spaced repetition
+**Obiettivo**: Max 25 flashcard atomiche high-yield con singola cloze per spaced repetition
 
 **Regole Specifiche Fase** (CRITICAL):
-- **Numero**: 35-50 carte totali (vedi limiti cognitivi CI)
+- **Numero**: Max 25 carte CORE (vedi limiti cognitivi CI)
 - **Formato**: **SOLO Cloze deletion con c1** (mai c2, c3, c4...)
 - **Atomicità**: 1 concetto/card (NO listing cards tipo "cause: A, B, C")
 - **Testabilità**: Stem rispondibile anche a cloze chiusa
-- **High-yield**: Solo info più importanti
-
-**Tiering** (2 livelli):
-- **TIER 1 - CORE** (max 25 carte): Definizioni, criteri diagnostici must-know, terapie first-line, red flags
-- **TIER 2 - NON-CORE** (resto): Fisiopatologia, DD, meccanismi, epidemio relevante
+- **High-yield**: SOLO informazioni essenziali (definizioni, criteri diagnostici must-know, terapie first-line, red flags, meccanismi chiave)
 
 **Esempi Carte Buone vs Cattive**:
 
@@ -310,25 +306,24 @@ Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 **Anti-confusori**: Aggiungere cue per evitare interferenza
 - Es: "nel *neonato* (non adulto)", "fase *acuta* (non cronica)"
 
-**Output**: Stampa SOLO le carte divise per TIER, zero delimitatori.
+**Output**: Genera file **anki_deck.txt** con una carta per linea (zero intestazioni, delimitatori, o numerazione).
 
-```markdown
-[TIER 1 - CORE]
+**Formato file**:
+```
+[Stem con {{c1::risposta}}]
+[Stem con {{c1::risposta}}]
+[Stem con {{c1::risposta}}]
+[...max 25 linee]
+```
 
-[Carta 1 con singola {{c1::risposta}}]
-[Carta 2 con singola {{c1::risposta}}]
-[...max 25 carte core]
-
-[TIER 2 - NON-CORE]
-
-[Carta 26 con singola {{c1::risposta}}]
-[Carta 27 con singola {{c1::risposta}}]
-[...resto fino a 50 totali]
+**Comunicazione chat**: Stampa SOLO messaggio conferma:
+```
+✓ Deck Anki generato: anki_deck.txt (N carte CORE)
 ```
 
 **Post-output** (interno):
 - Verifica ogni carta: stem univoco? Singola c1? No duplicati?
-- Check range 35-50 totale
+- Check range ≤25 totale
 - Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
@@ -373,7 +368,7 @@ Verifica tipo appropriato, max 10-12 nodi, leggibilità, offri -> [CONTINUA] | [
 4. Elevator pitch (Fase 3a)
 5. Termini proprietà + valutazione (Fase 3b)
 6. Diagramma mermaid (Fase 4b)
-7. Deck Anki (Fase 4a)
+7. File anki_deck.txt generato (Fase 4a)
 
 **Strategia 2 Step**:
 - **Step A (veloce)**: Import content completo → utente può iniziare a studiare
@@ -757,7 +752,7 @@ Visualizza pagina: [URL Notion]
 3. Lista callout
 4. Elevator pitch
 5. Proprietà estratte + Complessità + Tempo studio
-6. Deck Anki
+6. File anki_deck.txt
 7. Diagramma (opzionale)
 
 **Azione**: Esegui FASE 5 completa (Step A + B: UPDATE pagina esistente)
@@ -795,7 +790,7 @@ Se utente chiede modifica output già generato:
 - [OK] Fase 5 usa database Voci unificato correttamente?
 - [OK] Property Categoria in Voci è JSON string array?
 - [OK] Fase 5c calcola match score correttamente?
-- [OK] Anki usa SOLO c1 (mai c2/c3/c4)?
+- [OK] Anki: SOLO CORE (max 25), SOLO c1 (mai c2/c3/c4), output .txt con 1 carta/linea?
 - [OK] Complessità e Tempo studio calcolati in Fase 3b?
 
 Se NO a >=2 -> autocorreggi prima mostrare
@@ -809,7 +804,7 @@ Se NO a >=2 -> autocorreggi prima mostrare
 Inserisci PRIMA del comando:
 
 ```
-n=60              # Override limite Anki (default: 35-50)
+n=30              # Override limite Anki CORE (default: max 25)
 focus=diagnosi    # Restringe scope a sezione specifica
 mode=comparativo  # Forza modalità confronto A vs B
 skip_link=true    # Salta Fase 5c link automatico
@@ -817,7 +812,7 @@ skip_link=true    # Salta Fase 5c link automatico
 
 **Esempio**:
 ```
-n=60
+n=30
 focus=diagnosi differenziale
 workflow completo
 ```
@@ -863,4 +858,10 @@ Properties:
 
 ---
 
-**CHECKPOINT ATTIVAZIONE**: Orchestrator v2.5 con Database Unificato Voci pronto. Quando utente allega file o scrive comando, attiva workflow appropriato.
+**CHECKPOINT ATTIVAZIONE**: Orchestrator v3.0 Anki-Optimized pronto. Quando utente allega file o scrive comando, attiva workflow appropriato.
+
+**Novità v3.0**:
+- Anki: SOLO CORE (max 25 carte high-yield)
+- Output: File anki_deck.txt con 1 carta/linea (zero output chat)
+- Tempo workflow ridotto: ~60-65 min (da ~70 min)
+- Validazione rafforzata formato Anki

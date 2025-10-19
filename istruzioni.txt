@@ -99,10 +99,9 @@ mode=comparativo
 ## LIMITI COGNITIVI STANDARD
 | Elemento | Range | Rationale |
 |----------|-------|-----------|
-| Callout | 3-5 | Working memory capacity |
+| Callout | 5-7 | Working memory capacity aumentata |
 | Pilastri H2 | 4-6 | Optimal chunking |
 | Domande ❓ | 5-7 | Spaced retrieval |
-| Chiarimenti | 3-5 | No overlap domande |
 | Anki CORE | max 25 | High-yield essentials only |
 | Paragrafi | 2-4 frasi | Readability |
 

@@ -16,72 +16,83 @@ Il workflow applica rigorosamente i **Criteri CCI** (Chiarezza Clinica Integrata
 
 | File | Ruolo | Linee |
 |------|-------|-------|
-| **orchestrator.txt** | Motore workflow v4.4: scratchpad, oneshot, markdown semplice → Notion, MedGraph | ~780 |
+| **orchestrator.txt** | Motore workflow v4.5: generazione diretta Notion, validazione CCI interna, pitch rich_text | ~832 |
 | **istruzioni.txt** | Custom instructions: CCI, vincoli fonte, limiti cognitivi, validazione | ~154 |
 
-## Workflow Completo (v4.4)
+## Workflow Completo (v4.5)
 
-### BLOCCO 1: AUTOMATICO (~35-45 min)
+### BLOCCO 1: AUTOMATICO (~30-40 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
 | **1** | Traccia | Struttura H2/H3 in chat | 5-10 min |
-| **2** | Pagina Markdown | **Markdown SEMPLICE completo in chat** (salvato in memoria) | 15-25 min |
-| **3** | Elevator Pitch | Sintesi 170-200 parole in chat | 2-3 min |
-| **4** | Anki CORE | **FILE anki_deck.txt generato** (max 25 carte) | 5-8 min |
-| **5** | Callout | Lista 3-5 callout in chat, inseriti in pagina salvata | 2-3 min |
-| **6** | Diagramma | Codice Mermaid in chat, inserito in pagina salvata | 2-3 min |
-| **7** | Conversione + Pubblicazione | Markdown → Notion + update pagina + pitch | 1-2 min |
+| **2** | Pagina Notion + Callout | **Generazione diretta su Notion** (5-7 callout automatici, validazione CCI interna) | 15-25 min |
+| **3** | Diagramma Mermaid | Inserito su Notion (append blocks) | 2-3 min |
+| **4** | Pitch Rich Text | Update property con grassetto formattato | 2-3 min |
 
-**Esecuzione automatica** senza pause fino a Fase 7
+**Esecuzione automatica** senza pause fino a Fase 4
 
-**[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 8 o "ferma"
+**[PAUSA OBBLIGATORIA 1]** Digita "continua" per Anki o "ferma"
 
-### BLOCCO 2: Proprietà (~3-5 min)
+### BLOCCO 2: Anki (~5-8 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **8** | Proprietà + DB Voci | Estrazione termini, batch processing, calcolo Complessità/Tempo | 3-5 min |
+| **5** | Anki CORE | **FILE anki_deck.txt generato** (max 25 carte) | 5-8 min |
 
-**[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 9 (opzionale) o "ferma"
+**[PAUSA OBBLIGATORIA 2]** Digita "continua" per Proprietà o "ferma"
 
-### BLOCCO 3: Link (~3-5 min, opzionale)
+### BLOCCO 3: Proprietà (~3-5 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **9** | Link Automatici | Ricerca argomenti correlati (score ≥2), creazione pagine collegamento | 3-5 min |
+| **6** | Proprietà + DB Voci | Estrazione termini, batch processing, calcolo Complessità/Tempo | 3-5 min |
 
-**Tempo totale**: 55-65 min
+**[PAUSA OBBLIGATORIA 3]** Digita "continua" per Link (opzionale) o "ferma"
 
-## Funzionalità Chiave (v4.4)
+### BLOCCO 4: Link (~3-5 min, opzionale)
 
-### 1. **Scratchpad System + Oneshot Automatico**
+| Fase | Nome | Output | Tempo |
+|------|------|--------|-------|
+| **7** | Link Automatici | Ricerca argomenti correlati (score ≥2), creazione pagine collegamento | 3-5 min |
+
+**Tempo totale**: 50-60 min
+
+## Funzionalità Chiave (v4.5)
+
+### 1. **Generazione Diretta su Notion (zero output lungo in chat)**
+- Fase 2: genera pagina DIRETTAMENTE su Notion in memoria
+- Validazione CCI INTERNA dopo ogni H2 (no simulazione, no output chat)
+- Callout 5-7 inseriti AUTOMATICAMENTE durante generazione
+- Output chat conciso: "Pagina pubblicata (N parole, CCI: PASS, Callout: N)"
+- Elimina duplicazione lavoro e lunghezza chat
+
+### 2. **Scratchpad System + Oneshot Automatico**
 - Tracking stato workflow in memoria (fase corrente, outputs salvati, validation)
-- Esecuzione automatica BLOCCO 1 (fasi 1-7) senza interruzioni
-- Pause obbligatorie SOLO dopo Fase 7 e Fase 8
+- Esecuzione automatica BLOCCO 1 (fasi 1-4) senza interruzioni
+- Pause obbligatorie dopo Fase 4, Fase 5, Fase 6
 - Comando "status" per visibilità real-time
 - Auto-avanzamento tra fasi fino a pubblicazione
 
-### 2. **Markdown Semplice → Conversione Notion**
-- Fase 2: genera pagina in markdown STANDARD (`## Titolo`, non `>## Titolo`)
-- Output COMPLETO in chat (tutta la pagina visibile per validazione)
-- CCI check REALI dopo ogni H2 (non simulati)
-- Pagina salvata in memoria come markdown semplice
-- Fase 7: conversione automatica markdown → formato Notion prima pubblicazione
+### 3. **Pitch Rich Text (formattazione grassetto preservata)**
+- Fase 4: pitch property come rich_text (non plain text)
+- Mantiene UNA frase in grassetto (mossa decisiva)
+- API format: array con annotations `{"bold": true}`
+- Fix critico: grassetto visibile su Notion
 
-### 3. **File Anki Generato (non output chat)**
-- Fase 4: genera FILE `anki_deck.txt` nel progetto
+### 4. **File Anki Generato (non output chat)**
+- Fase 5: genera FILE `anki_deck.txt` nel progetto
 - Max 25 carte CORE con singola c1
 - Anti-confusori automatici (5 pattern)
 - Comunicazione chat: solo "File anki_deck.txt generato (N carte)"
 
-### 4. **CCI Enforcement**
+### 5. **CCI Enforcement**
 - Validazione incrementale dopo ogni H2 generato
 - Conteggi strict: max 18 parole/frase (threshold rigido, non media)
 - Auto-check finale: se ≥2 fail → autocorreggi (max 1 iterazione)
 - Pitch: validazione automatica 170-200 parole
 
-### 5. **Anti-confusori Anki**
+### 6. **Anti-confusori Anki**
 Pattern sistematici per evitare interferenza tra carte:
 - **Età/popolazione**: "nel *neonato*" vs "nell'*adulto* >65 anni"
 - **Temporalità**: "fase *acuta* (<72h)" vs "fase *cronica* (>3 mesi)"
@@ -89,22 +100,22 @@ Pattern sistematici per evitare interferenza tra carte:
 - **Localizzazione**: "ictus *emisfero dominante*"
 - **Contesto clinico**: "in *assenza di insufficienza renale*"
 
-### 6. **Retry Logic & Cache**
+### 7. **Retry Logic & Cache**
 - **Retry**: API timeout (3x), rate limit 429 (3x), server error 500+ (2x), network (3x)
 - **Rate limiting**: 350ms tra chiamate consecutive, batch operations
 - **Backoff**: esponenziale (1s, 2s, 4s)
 
-### 7. **Database Unificato Voci**
+### 8. **Database Unificato Voci**
 - Property "Categoria" multi_select: ["Eziologia", "Clinica", "Diagnosi", "Terapia"]
 - Relazione bidirezionale con Argomenti
 - Batch processing Fase 8: search → create → update
 
 ## Output Generati
 
-1. **Pagina Notion** (markdown Notion-ready):
+1. **Pagina Notion** (generata direttamente):
    - H2/H3 con toggle ▶
    - Indentazione 2 spazi (livello 1 sotto H2), 4 spazi (livello 2 sotto H3)
-   - 3-5 callout clinici con icone e colori
+   - **5-7 callout clinici** con icone e colori (inseriti automaticamente)
    - Diagramma Mermaid MedGraph (B/N + accento #00E0CC)
    - 5-7 domande cliniche integrate
    - Perle del professore (se in fonte)
@@ -116,7 +127,7 @@ Pattern sistematici per evitare interferenza tra carte:
 
 3. **Proprietà Database**:
    - **Voci**: relazione a DB unificato (2-3 termini × 4 categorie)
-   - **Pitch**: 170-200 parole
+   - **Pitch**: 170-200 parole (rich_text con UNA frase in grassetto)
    - **Complessità**: Semplice/Media/Complessa (calcolo automatico)
    - **Tempo studio stimato**: minuti (calcolo: H2×2.5 + H3×1.5 + Callout×1 + Domande×0.5)
 
@@ -129,10 +140,11 @@ Pattern sistematici per evitare interferenza tra carte:
 ## Comandi Disponibili
 
 ```bash
-workflow completo  # 9 fasi (~55-65 min) con pause obbligatorie
-essenziale        # Solo fasi 1-3 (traccia, pagina, pitch)
+workflow completo  # 7 fasi (~50-60 min) con 3 pause obbligatorie
+essenziale        # Solo fasi 1-2 (traccia + pagina Notion con callout)
 continua          # Procedi a blocco successivo (dopo pause)
 ferma             # Stop workflow
+status            # Mostra stato scratchpad
 ```
 
 ### Parametri Opzionali
@@ -158,54 +170,87 @@ workflow completo
 **Scenario**: Sbobina PDF "Insufficienza Cardiaca" allegata come unico file
 
 ```markdown
-[AUTO-START] Workflow completo rilevato - Inizio elaborazione
-
 [Fase 1] ✓ Traccia completata (5 H2)
 [ONESHOT] Auto-avanzamento: Fase 2
 
-[Fase 2] Generazione pagina: H2 3/5 completati
-[Auto-check CCI H2.3] ✓ PASS
-[Fase 2] ✓ Pagina completata (1850 parole)
+[Fase 2] [H2.1] Frasi: 18, >18: 2 (11.1%)
+[Fase 2] [H2.1] Autocorretto
+[Fase 2] [H2.2] Frasi: 15, >18: 0 (0.0%)
+[Fase 2] [H2.3] Frasi: 20, >18: 1 (5.0%)
+[Fase 2] [H2.4] Frasi: 17, >18: 0 (0.0%)
+[Fase 2] [H2.5] Frasi: 22, >18: 1 (4.5%)
 [ONESHOT] Auto-avanzamento: Fase 3
 
-[Fase 3] ✓ Callout inseriti: 4 (⚠️2 | 💡1 | ⭐1)
+Pagina pubblicata: https://notion.so/...
+Parole: 1850 | CCI: PASS (frasi >18: 4.3%) | Callout: 6 (RED:2 | BLUE:2 | GREEN:2)
+
+[Fase 3] Diagramma inserito: flowchart (10 nodi)
 [ONESHOT] Auto-avanzamento: Fase 4
 
-[Fase 4] ✓ Pitch completato (185 parole)
-[ONESHOT] Auto-avanzamento: Fase 5
-
-[Fase 5] ✓ Deck Anki generato: anki_deck.txt (23 carte CORE)
-[ONESHOT] Auto-avanzamento: Fase 6
-
-[Fase 6] ✓ Diagramma inserito: flowchart (10 nodi)
-[ONESHOT] Auto-avanzamento: Fase 7
-
-[Fase 7] ✓ Pagina pubblicata: https://notion.so/...
+[Fase 4] Pitch inserito: 185 parole (PASS)
 
 ═══════════════════════════════════════════
-    BLOCCO 1 COMPLETATO - PAUSA STRATEGICA
+    BLOCCO 1 COMPLETATO
 ═══════════════════════════════════════════
 
-✅ CONTENUTO PUBBLICATO:
-├─ Pagina Notion: live e studiabile
-├─ Pitch: inserito
-└─ Anki: anki_deck.txt (23 carte)
+CONTENUTO STUDIABILE:
+- Pagina Notion: 1850 parole (CCI: PASS)
+- Callout: 6 (RED:2 | BLUE:2 | GREEN:2)
+- Diagramma: flowchart (10 nodi)
+- Pitch: 185 parole
 
-⏸️  PROSSIMI STEP (opzionali):
-├─ Fase 8: Proprietà cliniche + DB Voci (~3-5 min)
-└─ Fase 9: Link automatici (~3-5 min)
+PROSSIMO STEP:
+Fase 5: File Anki (~5-8 min)
 
-Vuoi continuare? [continua | ferma | status]
+Digita 'continua' per Anki o 'ferma' per terminare
 ```
 
 **Utente**: `continua`
 
 ```markdown
-[Fase 8] Termini processati: 12/12 (cached: 3, created: 5, found: 4)
-[Fase 8] ✓ Proprietà aggiornate
+[Fase 5] File anki_deck.txt generato (23 carte CORE)
 
-[Fase 9] ✓ Trovati 3 collegamenti (score ≥2)
-[Fase 9] ✓ Pagine link create: 3
+═══════════════════════════════════════════
+    BLOCCO 2 COMPLETATO
+═══════════════════════════════════════════
+
+ANKI PRONTO:
+- File: anki_deck.txt
+- Carte: 23 CORE
+- Anti-confusori: applicati
+
+PROSSIMO STEP:
+Fase 6: Proprietà DB (~3-5 min)
+
+Digita 'continua' per proprietà o 'ferma' per terminare
+```
+
+**Utente**: `continua`
+
+```markdown
+[Fase 6] Termini processati: 12/12 (cached: 3, created: 5, found: 4)
+
+═══════════════════════════════════════════
+    BLOCCO 3 COMPLETATO
+═══════════════════════════════════════════
+
+PROPERTIES DB:
+- Voci: 12 termini (Ez:3 | Cl:3 | Dg:3 | Tx:3)
+- Complessità: Media
+- Tempo studio: 25 min
+
+PROSSIMO STEP (opzionale):
+Fase 7: Link automatici (~3-5 min)
+
+Digita 'continua' per link o 'ferma' per terminare
+```
+
+**Utente**: `continua`
+
+```markdown
+[Fase 7] ✓ Trovati 3 collegamenti (score ≥2)
+
+Collegamenti creati: 3
 
 [WORKFLOW COMPLETATO]
 
@@ -255,26 +300,28 @@ Vuoi continuare? [continua | ferma | status]
 
 | Workflow | Tempo Totale | Fasi Incluse |
 |----------|-------------|--------------|
-| **Completo** (Blocco 1+2) | 55-65 min | 1-9 |
-| **Completo** (solo Blocco 1) | 30-35 min | 1-7 |
-| **Essenziale** | 25-30 min | 1,2,4,8 (no callout, anki, diagramma, link) |
+| **Completo** (tutti i blocchi) | 50-60 min | 1-7 |
+| **Completo** (solo Blocco 1) | 30-40 min | 1-4 |
+| **Essenziale** | 20-30 min | 1-2 (solo traccia + pagina) |
 
-### Ottimizzazioni v4.0
+### Ottimizzazioni v4.5
 
-| Fase | Tempo v2.5 | Tempo v4.0 | Miglioramento |
+| Fase | Tempo v4.4 | Tempo v4.5 | Miglioramento |
 |------|-----------|-----------|---------------|
-| **Fase 3** (Callout) | 3-5 min | 1-2 min | **-60%** (str_replace vs lista) |
-| **Fase 6** (Diagramma) | 3-5 min | 1-2 min | **-60%** (str_replace vs output chat) |
-| **Fase 7** (Pubblicazione) | 3-5 min | 1 min | **-67%** (zero rigenerazione) |
-| **Fase 8c** (Batch DB) | N/A | 3-5 min | **-80% API calls** (batch vs individuale) |
+| **Fase 2** (Pagina + Callout) | 18-28 min (separati) | 15-25 min | **-15%** (generazione combinata) |
+| **Totale Blocco 1** | 35-45 min | 30-40 min | **-13%** (workflow semplificato 7 fasi) |
+| **Output chat** | ~2000 parole | ~100 parole | **-95%** (validazione CCI interna) |
+| **Fase 6** (Batch DB) | 3-5 min | 3-5 min | Mantenuto (già ottimizzato v4.1) |
 
 ### API Calls
 
 | Fase | Chiamate Tipiche | Note |
 |------|------------------|------|
-| Fase 7 (Upload) | 2-3 | search + update_content + update_properties |
-| Fase 8 (Proprietà) | 12-20 | batch search (cached: -40%), batch create, update |
-| Fase 9 (Link) | 5-10 | search candidati + match score + create collegamenti |
+| Fase 2 (Pagina + Callout) | 2 | search + replace_content (pubblicazione diretta) |
+| Fase 3 (Diagramma) | 1 | append_block |
+| Fase 4 (Pitch) | 1 | update_properties (rich_text) |
+| Fase 6 (Proprietà) | 12-20 | batch search (cached: -40%), batch create, update |
+| Fase 7 (Link) | 5-10 | search candidati + match score + create collegamenti |
 
 **Cache hit rate medio**: 20-30% (termini comuni come "TC", "Corticosteroidi", "Biopsia")
 
@@ -287,7 +334,7 @@ Vuoi continuare? [continua | ferma | status]
 
 **Properties**:
 - Nome (title)
-- Pitch (text)
+- Pitch (rich_text) ← formattazione grassetto preservata
 - Voci (relation → Voci, bidirezionale)
 - Complessità (select): Semplice | Media | Complessa
 - Tempo studio stimato (number)
@@ -319,10 +366,9 @@ Vuoi continuare? [continua | ferma | status]
 
 | Elemento | Range | Rationale |
 |----------|-------|-----------|
-| **Callout** | 3-5 | Working memory capacity |
+| **Callout** | **5-7** | Working memory capacity aumentata |
 | **Pilastri H2** | 4-6 | Optimal chunking |
 | **Domande ❓** | 5-7 | Spaced retrieval |
-| **Chiarimenti** | 3-5 | No overlap domande |
 | **Anki CORE** | max 25 | High-yield essentials only |
 | **Paragrafi** | 2-4 frasi | Readability |
 | **Frasi** | ≤18 parole | Sentence complexity (threshold rigido) |
@@ -340,7 +386,20 @@ Vuoi continuare? [continua | ferma | status]
 
 ## Changelog Versioni
 
-### v4.4 (Fixed) - Corrente
+### v4.5 (Optimized) - Corrente
+- **SEMPLIFICATO**: 7 fasi (da 9) - workflow più lineare
+- **OTTIMIZZATO**: generazione diretta su Notion (no output lungo in chat)
+- **AGGIUNTO**: validazione CCI interna in memoria (no simulazione)
+- **COMBINATO**: Fase 2 = pagina + callout 5-7 in un solo step
+- **AGGIUNTO**: pitch rich_text con grassetto formattato (fix critico)
+- **AGGIUNTO**: diagramma append blocks direttamente su Notion (Fase 3)
+- **AGGIORNATO**: callout 5-7 (da 3-5) in orchestrator + istruzioni
+- **RIDOTTO**: tempo totale ~50-60 min (da ~55-65 min v4.4)
+- **RIDOTTO**: output chat ~95% (da ~2000 a ~100 parole)
+- **MANTENUTO**: 3 pause obbligatorie (dopo Fase 4, 5, 6)
+- **MANTENUTO**: scratchpad system + oneshot automatico
+
+### v4.4 (Fixed) - Deprecata
 - **RIPRISTINATO**: scratchpad system, oneshot automatico fino a Fase 7
 - **FIX CRITICO**: Fase 2 genera markdown SEMPLICE (`## Titolo`, non `>## Titolo`)
 - **FIX CRITICO**: Fase 2 output COMPLETO in chat (tutta pagina visibile)
@@ -433,6 +492,6 @@ Formato con indentazione 2 spazi:
 
 ---
 
-**Ultimo aggiornamento**: v4.4 Fixed (2025)
+**Ultimo aggiornamento**: v4.5 Optimized (2025)
 **Piattaforma**: Claude Web Projects (browser)
 **Dipendenze**: API Notion (custom integration), Mermaid.js (diagrammi)

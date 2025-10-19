@@ -1,19 +1,19 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.4 Fixed)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5 Optimized)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
 > - **Vincoli fonte**: SOLO file progetto per contenuti clinici
 > - **Stile**: italiano medico standard, NO meta-frasi
-> - **Limiti cognitivi**: Callout 3-5, H2 4-6, Domande 5-7, Anki max 25
-> - **Validazione incrementale**: auto-check CCI dopo ogni H2
+> - **Limiti cognitivi**: Callout 5-7, H2 4-6, Domande 5-7, Anki max 25
+> - **Validazione incrementale**: auto-check CCI INTERNO dopo ogni H2
 
 ---
 
 ## COMANDI DISPONIBILI
 
 ```
-workflow completo  # 9 fasi (~55-65 min) [AUTO fino a pubblicazione]
-essenziale        # Solo fasi 1-3 (traccia, pagina, pitch)
+workflow completo  # 7 fasi (~50-60 min) [AUTO fino a pitch]
+essenziale        # Solo fasi 1-2 (traccia + pagina Notion)
 continua          # Procedi a blocco successivo (dopo pause)
 ferma             # Stop workflow
 status            # Mostra stato scratchpad
@@ -41,14 +41,12 @@ workflow_state = {
     "outputs": {
         "titolo_argomento": "",
         "traccia_h2": [],
-        "pagina_markdown_semplice": "",    # Markdown SEMPLICE (## Titolo)
-        "elevator_pitch": "",
-        "anki_deck_path": "",
-        "callout_inseriti": False,
-        "diagramma_inserito": False,
-        "pagina_notion_format": "",        # Convertita per Notion (>## Titolo)
         "notion_page_id": "",
         "notion_published": False,
+        "callout_count": 0,
+        "diagramma_inserito": False,
+        "pitch_inserito": False,
+        "anki_deck_path": "",
         "proprieta": {
             "eziologia": [],
             "clinica": [],
@@ -61,7 +59,8 @@ workflow_state = {
 
     "validation": {
         "cci_checks_passed": True,
-        "pitch_word_count": 0
+        "pitch_word_count": 0,
+        "frasi_lunghe_percentuale": 0
     }
 }
 ```
@@ -77,57 +76,61 @@ workflow_state = {
 
 **Comando**: `workflow completo`
 
-**BLOCCO 1 - AUTOMATICO** (fasi 1-7, ~35-45 min):
+**BLOCCO 1 - AUTOMATICO** (fasi 1-4, ~30-40 min):
 ```
 1. TRACCIA (5-10 min)
-   Output: Struttura H2/H3 in chat
+   Output chat: Struttura H2/H3
 
-2. PAGINA MARKDOWN (15-25 min)
-   Output: TUTTA la pagina in chat (markdown SEMPLICE)
-   Salva: in memoria per fasi successive
+2. PAGINA NOTION + CALLOUT (15-25 min)
+   - Genera pagina in MEMORIA con validazione CCI interna
+   - Genera e inserisci 5-7 callout automaticamente
+   - Converti markdown → Notion format
+   - Pubblica DIRETTAMENTE su Notion
+   Output chat: "Pagina pubblicata (N parole, CCI: PASS, Callout: N)"
 
-3. ELEVATOR PITCH (2-3 min)
-   Output: 170-200 parole in chat
+3. DIAGRAMMA MERMAID (2-3 min)
+   - Genera diagramma in memoria
+   - Inseriscilo su Notion (append blocks)
+   Output chat: "Diagramma inserito ([tipo], N nodi)"
 
-4. ANKI CORE (5-8 min)
-   Genera: FILE anki_deck.txt (max 25 carte)
-   Output: "File anki_deck.txt generato"
+4. PITCH RICH TEXT (2-3 min)
+   - Genera pitch con grassetto
+   - Update property rich_text (mantiene formattazione)
+   Output chat: "Pitch inserito (N parole)"
 
-5. CALLOUT CLINICI (2-3 min)
-   Output: Lista 3-5 callout in chat
-   Azione: Inseriscili in pagina markdown salvata
-
-6. DIAGRAMMA MERMAID (2-3 min)
-   Output: Codice Mermaid in chat
-   Azione: Inseriscilo in pagina markdown salvata
-
-7. CONVERSIONE + PUBBLICAZIONE (1-2 min)
-   7a. Converti markdown semplice → formato Notion
-   7b. Update content pagina Notion
-   7c. Update pitch
-
-[PAUSA OBBLIGATORIA]
-Output: "Pagina pubblicata. Digita 'continua' per proprietà o 'ferma'"
+[PAUSA OBBLIGATORIA 1]
+Output: "Pagina studiabile. Digita 'continua' per Anki o 'ferma'"
 ```
 
-**BLOCCO 2 - PROPRIETÀ** (fase 8, ~3-5 min, dopo "continua"):
+**BLOCCO 2 - ANKI** (fase 5, ~5-8 min, dopo "continua"):
 ```
-8. PROPRIETÀ + DB VOCI
-   8a. Estrazione termini (2-3 per categoria)
-   8b. Calcolo Complessità e Tempo studio
-   8c. Batch processing DB Voci
-   8d. Update properties Notion
+5. FILE ANKI (5-8 min)
+   - Genera anki_deck.txt (max 25 carte CORE)
+   Output chat: "File anki_deck.txt generato (N carte)"
 
-[PAUSA OBBLIGATORIA]
-Output: "Proprietà aggiornate. Digita 'continua' per link o 'ferma'"
+[PAUSA OBBLIGATORIA 2]
+Output: "Anki pronto. Digita 'continua' per proprietà o 'ferma'"
 ```
 
-**BLOCCO 3 - LINK** (fase 9, ~3-5 min, opzionale dopo "continua"):
+**BLOCCO 3 - PROPRIETÀ** (fase 6, ~3-5 min, dopo "continua"):
 ```
-9. LINK AUTOMATICI
-   9a. Ricerca argomenti correlati
-   9b. Proposta collegamenti (score >=2)
-   9c. Creazione pagine link
+6. PROPRIETÀ DB (3-5 min)
+   - Estrazione termini (2-3 per categoria)
+   - Calcolo Complessità e Tempo studio
+   - Batch processing DB Voci
+   - Update properties Notion
+   Output chat: "Proprietà aggiornate"
+
+[PAUSA OBBLIGATORIA 3]
+Output: "DB aggiornato. Digita 'continua' per link (opzionale) o 'ferma'"
+```
+
+**BLOCCO 4 - LINK** (fase 7, ~3-5 min, opzionale dopo "continua"):
+```
+7. LINK AUTOMATICI (3-5 min)
+   - Ricerca argomenti correlati (score >=2)
+   - Creazione pagine collegamento
+   Output chat: "Collegamenti creati: N"
 ```
 
 ---
@@ -164,11 +167,13 @@ Output: "Proprietà aggiornate. Digita 'continua' per link o 'ferma'"
 
 ---
 
-# FASE 2: PAGINA MARKDOWN SEMPLICE
+# FASE 2: PAGINA NOTION + CALLOUT (generazione diretta)
 
 **Input**: Traccia approvata
 
-**CRITICAL**: Genera markdown NORMALE, NON formato Notion
+**CRITICAL**: Genera pagina DIRETTAMENTE su Notion (no output lungo in chat)
+
+## Step 2.1: Generazione Pagina in Memoria
 
 **Regole CCI**:
 - Main message first (1-2 frasi chiave per H2)
@@ -177,27 +182,33 @@ Output: "Proprietà aggiornate. Digita 'continua' per link o 'ferma'"
 - Numeri con unità
 - Voce attiva
 
-**Struttura**:
+**Struttura** (markdown semplice in memoria):
 - Usa esattamente H2/H3 della traccia
-- Headers STANDARD: `## Titolo` e `### Sottotitolo` (NO `>`)
-- NO indentazione speciale
-- NO placeholder
+- Headers STANDARD: `## Titolo`, `### Sottotitolo`
+- Domande integrate: 5-7 totali, formato `**Domanda clinica?**`
 
-**Callout inline** (0-2 per H2, solo chiarimenti immediati):
-```markdown
-**[Termine]**: [definizione <=90 parole]
+**Validazione CCI INTERNA** (dopo ogni H2):
+
+```python
+# Genera H2 content
+h2_content = genera_h2_content(traccia_h2)
+
+# Valida INTERNAMENTE (no output chat)
+frasi = split_sentences(h2_content)
+frasi_lunghe = [f for f in frasi if word_count(f) > 18]
+percentuale_lunghe = len(frasi_lunghe) / len(frasi) * 100
+
+# Log interno (opzionale, minimo)
+print(f"[H2.{n}] Frasi: {len(frasi)}, >18: {len(frasi_lunghe)} ({percentuale_lunghe:.1f}%)")
+
+# Autocorreggi SE necessario
+if percentuale_lunghe > 20:  # >20% frasi lunghe
+    h2_content = autocorreggi_frasi_lunghe(h2_content)
+    print(f"[H2.{n}] Autocorretto")
+
+# Salva in memoria
+pagina_markdown += h2_content
 ```
-
-**Domande integrate**: 5-7 totali, formato `**Domanda clinica?**`
-
-**Validazione Incrementale** (dopo ogni H2):
-Conta automaticamente:
-- Frasi totali H2: N
-- Frasi >18 parole: N (X%)
-- Main message: SI/NO
-- Numeri con unità: SI/NO
-
-Se >=2 fail: autocorreggi sezione (max 1 iterazione)
 
 **Sviluppo Contenuto**:
 
@@ -207,172 +218,120 @@ Farmaco: Classe + meccanismo → Indicazioni → Farmacocinetica → Effetti avv
 
 Procedura: Indicazioni → Preparazione → Steps → Complicanze → Criteri successo
 
-**Formato Output** (markdown SEMPLICE):
+## Step 2.2: Generazione e Inserimento Callout (5-7 automatici)
+
+**CRITICAL**: Callout inseriti AUTOMATICAMENTE durante generazione
+
+**Regole**:
+- Numero: **5-7 totali** (limiti cognitivi aggiornati)
+- Distribuzione: 1-2 per H2
+- Priorità:
+  1. Controindicazioni assolute / salvavita
+  2. Red flags diagnostiche critiche
+  3. Errori comuni da evitare
+  4. Meccanismi fisiopatologici chiave
+  5. Differenze diagnostiche cruciali (se comparativo)
+
+**Sistema Classificazione** (formato markdown temporaneo):
 
 ```markdown
-# [Titolo Argomento]
+**[!] AVVERTENZA**: [testo critico sicurezza]
 
-## [H2 Pilastro 1]
+**[i] PRINCIPIO**: [meccanismo fisiopatologico]
 
-[Paragrafo 1: main message primi 1-2 frasi...]
-
-### [H3 Sottosezione 1.1]
-
-[Contenuto sotto H3...]
-
-[Paragrafo 2...]
-
-**Domanda clinica rilevante?**
-
-## [H2 Pilastro 2]
-
-[Contenuto...]
-
-[...continua tutti H2]
-
-## Perle del professore
-
-[Se presenti in fonte...]
+**[*] HIGH-YIELD**: [fatto nozionistico chiave]
 ```
 
-**Output**: Stampa TUTTA la pagina markdown in chat
+**Processo Interno**:
+```python
+# Dopo generazione pagina completa
+callout_list = genera_callout_automatici(pagina_markdown, n=5-7)
+
+# Per ogni callout
+for callout in callout_list:
+    # Identifica H2 destinazione
+    h2_target = identifica_h2_per_callout(callout)
+
+    # Inserisci in posizione appropriata
+    pagina_markdown = insert_callout_after_h2(pagina_markdown, h2_target, callout)
+
+# Salva count
+workflow_state["outputs"]["callout_count"] = len(callout_list)
+```
+
+## Step 2.3: Conversione Markdown → Notion Format
+
+**Conversioni automatiche**:
+
+1. **Toggle headers**: `## Titolo` → `>## Titolo`, `### Titolo` → `>### Titolo`
+
+2. **Indentazione**:
+   - Contenuto sotto H2: aggiungi 2 spazi iniziali a ogni riga
+   - Contenuto sotto H3: aggiungi 4 spazi iniziali a ogni riga
+
+3. **Callout format**:
+   ```python
+   # AVVERTENZA
+   "**[!] AVVERTENZA**: [testo]" →
+   '''  <callout icon="/icons/warning_red.svg" color="red_bg">
+     <span color="red">[testo]</span>
+     </callout>'''
+
+   # PRINCIPIO
+   "**[i] PRINCIPIO**: [testo]" →
+   '''  <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
+     <span color="blue">[testo]</span>
+     </callout>'''
+
+   # HIGH-YIELD
+   "**[*] HIGH-YIELD**: [testo]" →
+   '''  <callout icon="/icons/star_green.svg" color="green_bg">
+     <span color="green">[testo]</span>
+     </callout>'''
+   ```
+
+## Step 2.4: Ricerca Pagina Esistente
+
+Usa `notion-search`:
+```json
+{
+  "query": "[titolo argomento]",
+  "query_type": "internal",
+  "data_source_url": "collection://1b528251-9c2c-8065-a61e-000bfdfab7c7"
+}
+```
+
+## Step 2.5: Pubblicazione Diretta
+
+Usa `notion-update-page`:
+```json
+{
+  "page_id": "[ID]",
+  "command": "replace_content",
+  "new_str": "[pagina_notion_format con callout]"
+}
+```
+
+**Output** (messaggio conciso):
+```
+Pagina pubblicata: [URL]
+Parole: [N] | CCI: PASS (frasi >18: X%) | Callout: [N] (RED:[N] | BLUE:[N] | GREEN:[N])
+```
 
 **Post-output**:
-- Salva in `workflow_state["outputs"]["pagina_markdown_semplice"]`
-- CCI Quick Check finale (frasi >18 parole: X%)
+- Salva page_id in scratchpad
+- Marca `notion_published = True`
 - Auto-avanza a Fase 3 (oneshot)
 
 ---
 
-# FASE 3: ELEVATOR PITCH
+# FASE 3: DIAGRAMMA MERMAID (append su Notion)
 
-**Input**: Pagina salvata
+**Input**: Pagina Notion pubblicata
 
-**Regole**:
-- Lunghezza: 170-200 parole esatte
-- Modalità:
-  - Singola: Cos'è + Perché importante + Come gestire
-  - Comparativa: Cosa distingue + Quando A vs B
+**CRITICAL**: Inserisci diagramma DIRETTAMENTE su Notion (no conversione markdown)
 
-**Stile**: CCI, frasi 12-15 parole, UNA frase in grassetto
-
-**Output**: Stampa SOLO paragrafo pitch
-
-```markdown
-[Paragrafo unico 170-200 parole con una frase in grassetto]
-```
-
-**Validazione**:
-```
-Conteggio parole: N
-Status: PASS/FAIL
-```
-
-Se FAIL: autocorreggi (max 2 iterazioni)
-
-**Post-output**:
-- Salva in scratchpad
-- Auto-avanza a Fase 4 (oneshot)
-
----
-
-# FASE 4: ANKI CORE
-
-**Input**: Pagina salvata
-
-**Regole CRITICAL**:
-- Numero: max 25 carte CORE
-- Formato: SOLO cloze c1 (mai c2, c3, c4)
-- Atomicità: 1 concetto/card
-- High-yield: essenziali only
-
-**Anti-confusori** (pattern sistematici):
-1. Età/popolazione: "nel *neonato*" vs "nell'*adulto* >65 anni"
-2. Temporalità: "fase *acuta* (<72h)" vs "fase *cronica* (>3 mesi)"
-3. Gravità/tipo: "asma *intermittente*" vs "asma *persistente grave*"
-4. Localizzazione: "ictus *emisfero dominante*"
-5. Contesto clinico: "in *assenza insufficienza renale*"
-
-**Esempi Buone Carte**:
-```
-La principale causa di cecità nel diabete tipo 2 è {{c1::retinopatia diabetica}}.
-
-Nel diabete tipo 2 senza insufficienza renale, il farmaco di prima linea è {{c1::metformina}}.
-```
-
-**CRITICAL - Output FILE**:
-
-Genera file `anki_deck.txt` nel progetto con formato:
-```
-[Stem con {{c1::risposta}}]
-[Stem con {{c1::risposta}}]
-[...max 25 linee]
-```
-
-**Comunicazione chat** (NO output carte):
-```
-File anki_deck.txt generato (N carte CORE)
-```
-
-**Post-output**:
-- Salva path in scratchpad
-- Auto-avanza a Fase 5 (oneshot)
-
----
-
-# FASE 5: CALLOUT CLINICI
-
-**Input**: Pagina markdown semplice salvata
-
-**Regole**:
-- Numero: 3-5 totali
-- Distribuzione: max 1-2 per H2
-- Priorità: controindicazioni assolute, red flags, errori comuni, meccanismi chiave
-
-**Sistema Classificazione**:
-
-RED (Avvertenza):
-```markdown
-**[!] AVVERTENZA**: [testo critico sicurezza]
-```
-
-BLUE (Principio):
-```markdown
-**[i] PRINCIPIO**: [meccanismo fisiopatologico]
-```
-
-GREEN (High-Yield):
-```markdown
-**[*] HIGH-YIELD**: [fatto nozionistico chiave]
-```
-
-**Processo**:
-1. Analizza pagina salvata
-2. Genera lista 3-5 callout
-3. Inserisci ogni callout nella pagina markdown sotto H2 appropriato
-4. Aggiorna `workflow_state["outputs"]["pagina_markdown_semplice"]`
-
-**Output**: Stampa lista callout generati
-
-```markdown
-CALLOUT 1 - H2: [titolo] - Tipo: RED
-[testo callout]
-
-CALLOUT 2 - H2: [titolo] - Tipo: BLUE
-[testo callout]
-
-[...3-5 totali]
-```
-
-**Post-output**:
-- Marca `callout_inseriti = True` in scratchpad
-- Auto-avanza a Fase 6 (oneshot)
-
----
-
-# FASE 6: DIAGRAMMA MERMAID
-
-**Input**: Pagina markdown semplice salvata
+## Step 3.1: Generazione Diagramma in Memoria
 
 **Tipo** (auto-select):
 - Flowchart: algoritmi diagnostici/terapeutici
@@ -413,124 +372,199 @@ flowchart TB
   C -- No --> E[Follow-up]:::dashed
 ```
 
-**Processo**:
-1. Genera diagramma Mermaid
-2. Inseriscilo in pagina markdown (prima "Perle del professore" o fine)
-3. Aggiorna `workflow_state["outputs"]["pagina_markdown_semplice"]`
+## Step 3.2: Inserimento su Notion (append blocks)
 
-**Output**: Stampa codice Mermaid completo
+**Posizione**: Prima di "## Perle del professore" o alla fine
+
+Usa `notion-append-block` o `notion-insert-block`:
+```json
+{
+  "page_id": "[page_id]",
+  "block_type": "code",
+  "code": {
+    "language": "mermaid",
+    "rich_text": [{"text": {"content": "[codice_mermaid]"}}]
+  }
+}
+```
+
+**Output** (messaggio conciso):
+```
+Diagramma inserito: [tipo] (N nodi)
+```
 
 **Post-output**:
-- Marca `diagramma_inserito = True` in scratchpad
-- Auto-avanza a Fase 7 (oneshot)
+- Marca `diagramma_inserito = True`
+- Auto-avanza a Fase 4 (oneshot)
 
 ---
 
-# FASE 7: CONVERSIONE + PUBBLICAZIONE
+# FASE 4: PITCH RICH TEXT (con grassetto formattato)
 
-**Input**:
-- Pagina markdown semplice completa (con callout e diagramma)
-- Elevator pitch
+**Input**: Pagina Notion pubblicata
 
-**STEP 7a: CONVERSIONE Markdown → Notion**
+**CRITICAL**: Pitch come rich_text per mantenere grassetto
 
-Converti `pagina_markdown_semplice` in formato Notion:
+## Step 4.1: Generazione Pitch in Memoria
 
-1. **Toggle headers**: `## Titolo` → `>## Titolo`, `### Titolo` → `>### Titolo`
+**Regole**:
+- Lunghezza: 170-200 parole esatte
+- Modalità:
+  - Singola: Cos'è + Perché importante + Come gestire
+  - Comparativa: Cosa distingue + Quando A vs B
+- **UNA frase in grassetto** (mossa decisiva)
 
-2. **Indentazione**:
-   - Contenuto sotto H2: aggiungi 2 spazi iniziali a ogni riga
-   - Contenuto sotto H3: aggiungi 4 spazi iniziali a ogni riga
+**Stile**: CCI, frasi 12-15 parole
 
-3. **Callout format**:
-   - `**[!] AVVERTENZA**: [testo]` →
-     ```markdown
-       <callout icon="/icons/warning_red.svg" color="red_bg">
-       <span color="red">[testo]</span>
-       </callout>
-     ```
-   - `**[i] PRINCIPIO**: [testo]` →
-     ```markdown
-       <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
-       <span color="blue">[testo]</span>
-       </callout>
-     ```
-   - `**[*] HIGH-YIELD**: [testo]` →
-     ```markdown
-       <callout icon="/icons/star_green.svg" color="green_bg">
-       <span color="green">[testo]</span>
-       </callout>
-     ```
+**Validazione interna**:
+```python
+pitch_text = genera_pitch(pagina_content)
+word_count = count_words(pitch_text)
 
-Salva risultato in `workflow_state["outputs"]["pagina_notion_format"]`
+# Valida range
+if word_count < 170 or word_count > 200:
+    pitch_text = autocorreggi_pitch_length(pitch_text, target=185)
 
-**STEP 7b: RICERCA PAGINA**
-
-Usa `notion-search`:
-```json
-{
-  "query": "[titolo argomento]",
-  "query_type": "internal",
-  "data_source_url": "collection://1b528251-9c2c-8065-a61e-000bfdfab7c7"
-}
+# Identifica frase grassetto
+bold_sentence = identifica_frase_grassetto(pitch_text)
 ```
 
-**STEP 7c: UPDATE CONTENT**
+## Step 4.2: Conversione a Rich Text con Grassetto
+
+**Formato Notion API**:
+```python
+# Split pitch in parti: pre-bold, bold, post-bold
+parts = split_pitch_with_bold(pitch_text)
+
+rich_text_array = [
+    {"text": {"content": parts["pre"]}},
+    {"text": {"content": parts["bold"]}, "annotations": {"bold": True}},
+    {"text": {"content": parts["post"]}}
+]
+```
+
+## Step 4.3: Update Property
 
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[ID]",
-  "command": "replace_content",
-  "new_str": "[pagina_notion_format]"
-}
-```
-
-**STEP 7d: UPDATE PITCH**
-
-Usa `notion-update-page`:
-```json
-{
-  "page_id": "[ID]",
+  "page_id": "[page_id]",
   "command": "update_properties",
   "properties": {
-    "Pitch": "[elevator_pitch]",
+    "Pitch": {
+      "rich_text": [
+        {"text": {"content": "testo normale "}},
+        {"text": {"content": "testo grassetto"}, "annotations": {"bold": true}},
+        {"text": {"content": " resto testo."}}
+      ]
+    },
     "Status argomento": "In corso"
   }
 }
 ```
 
-**Output**:
+**Output** (messaggio conciso):
 ```
-Pagina pubblicata: [URL Notion]
-Pitch inserito.
+Pitch inserito: [N] parole (PASS)
+```
 
+**Output completo BLOCCO 1**:
+```
 ===========================================
     BLOCCO 1 COMPLETATO
 ===========================================
 
-CONTENUTO LIVE:
-- Pagina Notion: [N] parole
+CONTENUTO STUDIABILE:
+- Pagina Notion: [N] parole (CCI: PASS)
 - Callout: [N] (RED:[N] | BLUE:[N] | GREEN:[N])
-- Diagramma: [tipo]
+- Diagramma: [tipo] ([N] nodi)
 - Pitch: [N] parole
-- Anki: anki_deck.txt ([N] carte)
 
 PROSSIMO STEP:
-Fase 8: Proprietà DB + Voci (~3-5 min)
+Fase 5: File Anki (~5-8 min)
 
-Digita 'continua' per procedere o 'ferma' per terminare
+Digita 'continua' per Anki o 'ferma' per terminare
 ```
 
-**[PAUSA OBBLIGATORIA]** Attendi comando utente.
+**[PAUSA OBBLIGATORIA 1]** Attendi comando utente.
+
+**Post-output**:
+- Marca `pitch_inserito = True`
+- Salva word_count in scratchpad
 
 ---
 
-# FASE 8: PROPRIETÀ + DB VOCI
+# FASE 5: FILE ANKI
 
 **[Esegui SOLO dopo comando "continua"]**
 
-## 8a. Estrazione Termini
+**Input**: Pagina Notion pubblicata
+
+**Regole CRITICAL**:
+- Numero: max 25 carte CORE
+- Formato: SOLO cloze c1 (mai c2, c3, c4)
+- Atomicità: 1 concetto/card
+- High-yield: essenziali only
+
+**Anti-confusori** (pattern sistematici):
+1. Età/popolazione: "nel *neonato*" vs "nell'*adulto* >65 anni"
+2. Temporalità: "fase *acuta* (<72h)" vs "fase *cronica* (>3 mesi)"
+3. Gravità/tipo: "asma *intermittente*" vs "asma *persistente grave*"
+4. Localizzazione: "ictus *emisfero dominante*"
+5. Contesto clinico: "in *assenza insufficienza renale*"
+
+**Esempi Buone Carte**:
+```
+La principale causa di cecità nel diabete tipo 2 è {{c1::retinopatia diabetica}}.
+
+Nel diabete tipo 2 senza insufficienza renale, il farmaco di prima linea è {{c1::metformina}}.
+```
+
+**Output FILE**:
+
+Genera file `anki_deck.txt` nel progetto:
+```
+[Stem con {{c1::risposta}}]
+[Stem con {{c1::risposta}}]
+[...max 25 linee]
+```
+
+**Comunicazione chat**:
+```
+File anki_deck.txt generato (N carte CORE)
+```
+
+**Output completo BLOCCO 2**:
+```
+===========================================
+    BLOCCO 2 COMPLETATO
+===========================================
+
+ANKI PRONTO:
+- File: anki_deck.txt
+- Carte: [N] CORE
+- Anti-confusori: applicati
+
+PROSSIMO STEP:
+Fase 6: Proprietà DB (~3-5 min)
+
+Digita 'continua' per proprietà o 'ferma' per terminare
+```
+
+**[PAUSA OBBLIGATORIA 2]** Attendi comando utente.
+
+**Post-output**:
+- Salva path in scratchpad
+
+---
+
+# FASE 6: PROPRIETÀ DB
+
+**[Esegui SOLO dopo comando "continua"]**
+
+**Input**: Pagina Notion pubblicata
+
+## 6a. Estrazione Termini
 
 Estrai 2-3 termini per categoria:
 - Eziologia: cause/categorie patogenetiche
@@ -546,7 +580,7 @@ Diagnosi: [termine1, termine2, termine3]
 Terapia: [termine1, termine2, termine3]
 ```
 
-## 8b. Valutazione Automatica
+## 6b. Valutazione Automatica
 
 **Complessità** (score):
 - Struttura: H2 (1pt), H3 (0.5pt), Domande (0.5pt)
@@ -570,7 +604,7 @@ Complessità: [Semplice/Media/Complessa]
 Tempo studio: [N] minuti
 ```
 
-## 8c. Batch Processing DB Voci
+## 6c. Batch Processing DB Voci
 
 **Database Voci**:
 - ID: `290282519c2c801ea214d30b803c78f8`
@@ -588,12 +622,12 @@ Tempo studio: [N] minuti
 "Voci": "[\"https://notion.so/page1\", \"https://notion.so/page2\"]"
 ```
 
-## 8d. Update Properties
+## 6d. Update Properties
 
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[ID]",
+  "page_id": "[page_id]",
   "command": "update_properties",
   "properties": {
     "Voci": "[\"url1\", \"url2\", ...]",
@@ -603,12 +637,10 @@ Usa `notion-update-page`:
 }
 ```
 
-**Output**:
+**Output completo BLOCCO 3**:
 ```
-Proprietà aggiornate.
-
 ===========================================
-    BLOCCO 2 COMPLETATO
+    BLOCCO 3 COMPLETATO
 ===========================================
 
 PROPERTIES DB:
@@ -617,26 +649,28 @@ PROPERTIES DB:
 - Tempo studio: [N] min
 
 PROSSIMO STEP (opzionale):
-Fase 9: Link automatici (~3-5 min)
+Fase 7: Link automatici (~3-5 min)
 
 Digita 'continua' per link o 'ferma' per terminare
 ```
 
-**[PAUSA OBBLIGATORIA]** Attendi comando utente.
+**[PAUSA OBBLIGATORIA 3]** Attendi comando utente.
 
 ---
 
-# FASE 9: LINK AUTOMATICI
+# FASE 7: LINK AUTOMATICI
 
 **[Esegui SOLO dopo comando "continua"]**
 
-## 9a. Ricerca Candidati
+**Input**: Argomento con proprietà complete
+
+## 7a. Ricerca Candidati
 
 Usa `notion-search` su database Argomenti:
 - Filtra: `Argomento primario = YES`
 - Escludi: argomento corrente
 
-## 9b. Calcolo Match Score
+## 7b. Calcolo Match Score
 
 Per ogni candidato:
 ```python
@@ -658,7 +692,7 @@ for cat in ["Eziologia", "Clinica", "Diagnosi", "Terapia"]:
 # Soglia: score >= 2
 ```
 
-## 9c. Output Proposta
+## 7c. Output Proposta
 
 ```
 LINK: Argomenti correlati trovati
@@ -673,7 +707,7 @@ LINK: Argomenti correlati trovati
 Crea tutti? [si/no]
 ```
 
-## 9d. Creazione Link
+## 7d. Creazione Link
 
 Per ogni candidato score >=2:
 
@@ -694,7 +728,7 @@ Match score: [N]
 ```
 3. Update relazione bidirezionale "Argomenti correlati"
 
-**Output**:
+**Output finale**:
 ```
 Collegamenti creati: [N]
 
@@ -704,8 +738,9 @@ Collegamenti creati: [N]
 
 RIEPILOGO:
 - Pagina: [URL]
-- Parole: [N]
+- Parole: [N] (CCI: PASS)
 - Callout: [N]
+- Diagramma: [tipo]
 - Pitch: [N] parole
 - Anki: [N] carte
 - Voci: [N] termini
@@ -721,9 +756,9 @@ Tempo totale: [N] min
 
 **Comando**: `essenziale`
 
-**Fasi**: Solo 1-3 (traccia, pagina markdown, pitch)
-**Tempo**: 25-30 min
-**Output**: Pagina markdown + Pitch (no callout, anki, pubblicazione)
+**Fasi**: Solo 1-2 (traccia + pagina Notion con callout)
+**Tempo**: 20-30 min
+**Output**: Pagina Notion studiabile con callout
 
 ---
 
@@ -735,7 +770,7 @@ Tempo totale: [N] min
 
 Properties:
 - Nome (title)
-- Pitch (text)
+- Pitch (rich_text) ← CRITICAL: mantiene grassetto
 - Voci (relation → Voci)
 - Complessità (select): Semplice | Media | Complessa
 - Tempo studio stimato (number)
@@ -766,14 +801,31 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.4**: Orchestrator corretto.
+## LIMITI COGNITIVI AGGIORNATI
 
-Modifiche critiche da v4.3:
-- RIPRISTINATO: scratchpad, oneshot automatico fino a pubblicazione
-- FIX CRITICO: Fase 2 genera markdown SEMPLICE (## Titolo, non >##)
-- FIX CRITICO: Fase 2 output COMPLETO in chat (tutta la pagina visibile)
-- FIX CRITICO: Fase 4 genera FILE anki_deck.txt (non output chat)
-- FIX CRITICO: Fase 7 conversione markdown → Notion + pubblicazione
-- MANTENUTO: pause obbligatorie dopo Fase 7 e Fase 8
-- MANTENUTO: indentazione 2 spazi (H2), 4 spazi (H3)
-- RIMOSSO: emoji, metadati superflui
+| Elemento | Range | Rationale |
+|----------|-------|-----------|
+| **Callout** | **5-7** | Working memory capacity aumentata |
+| **Pilastri H2** | 4-6 | Optimal chunking |
+| **Domande** | 5-7 | Spaced retrieval |
+| **Anki CORE** | max 25 | High-yield essentials only |
+| **Paragrafi** | 2-4 frasi | Readability |
+| **Frasi** | ≤18 parole | Sentence complexity (threshold rigido) |
+| **Pitch** | 170-200 parole | Elevator pitch standard |
+| **Diagramma nodi** | ≤11 | Visual clarity |
+
+---
+
+**CHECKPOINT v4.5**: Orchestrator ottimizzato.
+
+Modifiche critiche da v4.4:
+- SEMPLIFICATO: 7 fasi (da 9)
+- OTTIMIZZATO: generazione diretta su Notion (no output lungo in chat)
+- AGGIUNTO: validazione CCI interna in memoria
+- COMBINATO: Fase 2 = pagina + callout in un solo step
+- AGGIUNTO: pitch rich_text con grassetto formattato
+- AGGIUNTO: diagramma append blocks direttamente su Notion
+- AGGIORNATO: callout 5-7 (da 3-5)
+- RIDOTTO: tempo totale ~50-60 min (da ~55-65 min)
+- MANTENUTO: pause obbligatorie dopo fasi chiave
+- MANTENUTO: scratchpad system

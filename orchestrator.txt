@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5.2 Simplified)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.3 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -93,9 +93,9 @@ workflow_state = {
    - Inseriscilo su Notion (append blocks)
    Output chat: "Diagramma inserito ([tipo], N nodi)"
 
-4. PITCH RICH TEXT (2-3 min)
-   - Genera pitch con grassetto
-   - Update property rich_text (mantiene formattazione)
+4. PITCH (2-3 min)
+   - Genera pitch 170-200 parole
+   - Update property text semplice
    Output chat: "Pitch inserito (N parole)"
 
 [PAUSA OBBLIGATORIA 1]
@@ -342,57 +342,28 @@ Diagramma inserito: [tipo] (N nodi)
 Dopo aver stampato l'output sopra, NON fermarti.
 
 1. Salva mentalmente: diagramma_inserito = True (scratchpad)
-2. **ESEGUI SUBITO** la FASE 4 sotto (Pitch Rich Text)
+2. **ESEGUI SUBITO** la FASE 4 sotto (Pitch)
 
 Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 
 ---
 
-# FASE 4: PITCH RICH TEXT (con grassetto formattato)
+# FASE 4: PITCH
 
 **Input**: Pagina Notion pubblicata
 
-**CRITICAL**: Pitch come rich_text per mantenere grassetto
-
-## Step 4.1: Generazione Pitch in Memoria
+## Genera Pitch
 
 **Regole**:
 - Lunghezza: 170-200 parole esatte
 - Modalità:
   - Singola: Cos'è + Perché importante + Come gestire
   - Comparativa: Cosa distingue + Quando A vs B
-- **UNA frase in grassetto** (mossa decisiva)
+- Stile: CCI, frasi 12-15 parole
 
-**Stile**: CCI, frasi 12-15 parole
+**Validazione interna**: se <170 o >200 parole → autocorreggi a ~185 parole
 
-**Validazione interna**:
-```python
-pitch_text = genera_pitch(pagina_content)
-word_count = count_words(pitch_text)
-
-# Valida range
-if word_count < 170 or word_count > 200:
-    pitch_text = autocorreggi_pitch_length(pitch_text, target=185)
-
-# Identifica frase grassetto
-bold_sentence = identifica_frase_grassetto(pitch_text)
-```
-
-## Step 4.2: Conversione a Rich Text con Grassetto
-
-**Formato Notion API**:
-```python
-# Split pitch in parti: pre-bold, bold, post-bold
-parts = split_pitch_with_bold(pitch_text)
-
-rich_text_array = [
-    {"text": {"content": parts["pre"]}},
-    {"text": {"content": parts["bold"]}, "annotations": {"bold": True}},
-    {"text": {"content": parts["post"]}}
-]
-```
-
-## Step 4.3: Update Property
+## Update Property
 
 Usa `notion-update-page`:
 ```json
@@ -400,13 +371,7 @@ Usa `notion-update-page`:
   "page_id": "[page_id]",
   "command": "update_properties",
   "properties": {
-    "Pitch": {
-      "rich_text": [
-        {"text": {"content": "testo normale "}},
-        {"text": {"content": "testo grassetto"}, "annotations": {"bold": true}},
-        {"text": {"content": " resto testo."}}
-      ]
-    },
+    "Pitch": "[testo pitch 170-200 parole]",
     "Status argomento": "Attivo"
   }
 }
@@ -779,14 +744,14 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5.2**: Orchestrator semplificato.
+**CHECKPOINT v4.5.3**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
 - OTTIMIZZATO: generazione diretta su Notion (no output lungo in chat)
 - AGGIUNTO: validazione CCI interna in memoria
 - COMBINATO: Fase 2 = pagina + callout in un solo step
-- AGGIUNTO: pitch rich_text con grassetto formattato
+- SEMPLIFICATO: pitch text semplice (no rich_text)
 - AGGIUNTO: diagramma append blocks direttamente su Notion
 - AGGIORNATO: callout 5-7 (da 3-5)
 - RIDOTTO: tempo totale ~50-60 min (da ~55-65 min)
@@ -801,3 +766,8 @@ Fix v4.5.2 (generazione Notion):
 - RIMOSSO: conversioni markdown → Notion
 - SEMPLIFICATO: Fase 2 genera DIRETTAMENTE in formato Notion
 - FIX: Status argomento = "Attivo" (non "In corso")
+
+Fix v4.5.3 (pitch semplificato):
+- RIMOSSO: rich_text con grassetto (causava problemi)
+- SEMPLIFICATO: Pitch come text semplice
+- Property: "Pitch": "[testo]" (no array, no annotations)

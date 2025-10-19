@@ -100,19 +100,38 @@ Vietato aggiungere:
 Se dati insufficienti:
 Anteponi `⚠️ Dati insufficienti: <cosa manca>`, poi output parziale.
 
-## VALIDAZIONE INCREMENTALE
+## VALIDAZIONE INCREMENTALE (enforcement rigoroso)
 Durante generazione Pagina Notion, dopo ogni H2:
-- ✓ Main message presente in apertura sezione?
-- ✓ Frasi medie ≤18 parole?
-- ✓ Numeri con unità esplicite?
 
-Se NO a ≥2 → autocorreggi quella sezione prima di proseguire.
+**Conteggi strict**:
+- Conta parole ogni frase (split su `.`, `?`, `!`)
+- Max 18 parole/frase (threshold rigido, non media)
+- Se >20% frasi eccedono 18 → autocorreggi TUTTA sezione
+
+**Checklist per sezione**:
+- ✓ Main message: primi 1-2 frasi contengono concetto core?
+- ✓ Frasi: ≤18 parole ciascuna (conta esatta)
+- ✓ Numeri: ogni dato quantitativo ha unità (es. "5 giorni", NON "5")
+- ✓ Paragrafi: 2-4 frasi max (conta esatta)
+
+**Se fail ≥2 check**: autocorreggi sezione prima di proseguire (max 1 iterazione).
 
 ## CCI QUICK CHECK (auto-validazione finale)
 Alla fine di ogni output che genera contenuto, verifica:
-- ✓ Main message in prima frase?
-- ✓ Frasi medie ≤18 parole?
-- ✓ Numeri con unità esplicite?
-- ✓ Azioni operative chiare?
 
-Se NO a ≥2 → rivedi output automaticamente (max 1 iterazione).
+**Conteggi automatici**:
+```
+Frasi totali: [N]
+Frasi >18 parole: [N] ([X]%)
+Media parole/frase: [N]
+Paragrafi >4 frasi: [N]
+```
+
+**Checklist finale**:
+- ✓ Main message in prima frase ogni H2?
+- ✓ ≤10% frasi eccedono 18 parole?
+- ✓ Ogni numero ha unità esplicita?
+- ✓ Azioni operative usano verbi imperativi/infiniti?
+
+**Se fail ≥2 check**: rivedi output automaticamente (max 1 iterazione).
+**Se >20% frasi >18 parole**: STOP e segnala necessità riscrittura.

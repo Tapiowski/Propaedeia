@@ -124,6 +124,17 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
   ```
 - **Validazione incrementale**: applica auto-check CCI dopo ogni H2
 
+**Progress Indicator** (mostra durante generazione):
+```
+[Fase 1b] Generazione pagina: H2 [N]/[TOT] completati
+```
+
+**Esempio**:
+```
+[Fase 1b] Generazione pagina: H2 2/5 completati
+[Auto-check CCI H2.2] ✓ PASS
+```
+
 **Sviluppo Contenuto per Tipologia**:
 
 **Patologia**: Definizione + epidemiologia -> Fisiopatologia -> Quadro clinico -> Diagnosi (criteri + DD) -> Terapia + follow-up -> Prognosi/Complicanze
@@ -191,7 +202,7 @@ Verifica 3-5 callout, distribuzione tipologie, offri -> [CONTINUA] | [MODIFICA] 
 **Obiettivo**: Sintesi 170-200 parole per recall rapido
 
 **Regole Specifiche Fase**:
-- **Lunghezza**: 170-200 parole (strict)
+- **Lunghezza**: Esattamente 170-200 parole (conteggio automatico strict)
 - **Modalità auto-select**:
   - **Singola** (1 argomento): Cos'è + Perché importante + Come gestire
   - **Comparativa** (>=2 argomenti o patologie A vs B): Cosa distingue + Quando scegliere A vs B
@@ -209,7 +220,24 @@ Verifica 3-5 callout, distribuzione tipologie, offri -> [CONTINUA] | [MODIFICA] 
 ```
 
 **Post-output** (interno):
-Verifica lunghezza 170-200, modalità corretta (singola/comparativa), offri -> [CONTINUA] | [MODIFICA] | [FERMA]
+
+**Validazione automatica strict**:
+```
+Conteggio parole: [N]
+Status: [PASS se 170-200 | FAIL se fuori range]
+Frasi totali: [N]
+Frasi >15 parole: [N]
+Grassetto presente: [SÌ/NO]
+```
+
+**Se FAIL lunghezza**:
+- <170 parole: espandi con dettagli clinici rilevanti
+- >200 parole: riduci eliminando ridondanze (priorità: fisiopat teorica, epidemio non critica)
+- Ricontrolla dopo correzione (max 2 iterazioni)
+
+**Se >30% frasi >15 parole**: riformula più conciso
+
+Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
@@ -303,8 +331,36 @@ Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 ✅ **BENE**: "Per diagnosticare febbre reumatica servono 2 criteri {{c1::maggiori}} O 1 maggiore + 2 minori."
 → Testa logica decisionale, non mera lista
 
-**Anti-confusori**: Aggiungere cue per evitare interferenza
-- Es: "nel *neonato* (non adulto)", "fase *acuta* (non cronica)"
+**Anti-confusori automatici**: Aggiungere cue contestuali per evitare interferenza tra carte simili
+
+**Pattern da applicare sistematicamente**:
+
+1. **Età/popolazione**: specifica sempre se differisce da default
+   - "nel *neonato*" (se info pediatrica)
+   - "nell'*adulto* >65 anni" (se geriatria)
+   - Default: adulto 18-65 (non serve specificare)
+
+2. **Temporalità**: distingui fase/durata
+   - "nella fase *acuta* (<72h)" vs "nella fase *cronica* (>3 mesi)"
+   - "in *prima dose*" vs "a regime"
+
+3. **Gravità/tipo**: evita ambiguità
+   - "nell'asma *intermittente*" vs "nell'asma *persistente grave*"
+   - "nel diabete *tipo 1*" vs "nel diabete *tipo 2*"
+
+4. **Localizzazione anatomica**: specifica se cruciale
+   - "nell'ictus *emisfero dominante*"
+   - "nella lesione *emisfero sx*"
+
+5. **Contesto clinico**: micro-cue situazionale
+   - "in *assenza di insufficienza renale*"
+   - "se *non controindicazioni assolute*"
+   - "in *paziente non trattato*"
+
+**Applicazione**: Scansiona ogni carta e aggiungi cue se:
+- Argomento ha varianti (es. farmaco con dosi diverse per età)
+- Concetto compare in più contesti (es. criterio valido solo in acuto)
+- Rischio confusione con carte precedenti (stesso termine, contesto diverso)
 
 **Output**: Genera file **anki_deck.txt** con una carta per linea (zero intestazioni, delimitatori, o numerazione).
 
@@ -369,6 +425,24 @@ Verifica tipo appropriato, max 10-12 nodi, leggibilità, offri -> [CONTINUA] | [
 5. Termini proprietà + valutazione (Fase 3b)
 6. Diagramma mermaid (Fase 4b)
 7. File anki_deck.txt generato (Fase 4a)
+
+**PRE-FLIGHT VALIDATION** (interno, prima di API calls):
+
+Esegui controlli rigorosi su tutti i prerequisiti:
+```
+✓ Titolo: non vuoto, ≤100 caratteri
+✓ H2: range 4-6, tutti hanno ▶
+✓ H3: tutti hanno ▶
+✓ Callout: 3-5 totali, tutti hanno icon + color validi
+✓ Pitch: esattamente 170-200 parole (conteggio strict)
+✓ Complessità: in ["Semplice", "Media", "Complessa"]
+✓ Tempo studio: intero positivo, multiplo di 5
+✓ Termini proprietà: 2-3 per categoria, non vuoti
+✓ Diagramma: blocco mermaid valido (apre con ```mermaid)
+✓ anki_deck.txt: esiste, ≤25 linee, ogni linea ha {{c1::...}}
+```
+
+**Se validation fail**: STOP e segnala errore specifico prima di chiamare API.
 
 **Strategia 2 Step**:
 - **Step A (veloce)**: Import content completo → utente può iniziare a studiare
@@ -469,6 +543,16 @@ Pagina aggiornata: [URL Notion]
 
 **STEP B: POPOLAMENTO PROPRIETÀ** (~1-2 min) - DATABASE UNIFICATO VOCI
 
+**Progress Indicator** (mostra durante elaborazione):
+```
+[Fase 5 Step B] Termini processati: [N]/[TOT]
+```
+
+**Esempio**:
+```
+[Fase 5 Step B] Termini processati: 5/12 (cached: 2, created: 3)
+```
+
 **B1. Gestione Relazione Unificata "Voci"**
 
 **Database "Voci" (Unificato)**:
@@ -558,9 +642,33 @@ Le doppie graffe `{{...}}` sono **solo nell'output** di Notion (quando leggi), *
 - Offri -> [CONTINUA per LINK AUTOMATICO] | [FERMA]
 
 **Note Tecniche Fase 5**:
-- Rate limiting: Max 3 req/sec
-- Cache locale termini già cercati in sessione
-- **Validazione pre-update**:
+
+**Gestione Errori & Retry Logic**:
+- **API timeout**: Retry max 3 volte con backoff (1s, 2s, 4s)
+- **Rate limit (429)**: Pausa automatica 1s e retry (max 3)
+- **Not found (404)**: Zero retry, segnala errore immediatamente
+- **Server error (500+)**: Retry max 2 volte con backoff 2s
+- **Network error**: Retry max 3 volte con backoff 1s
+
+**Logging interno** (non mostrare a utente):
+```
+[Retry 1/3] notion-search fallito (429) → pausa 1s
+[Retry 2/3] notion-update-page fallito (timeout) → pausa 2s
+[SUCCESS] dopo 2 retry
+```
+
+**Cache Termini Voci** (sessione corrente):
+- Mantieni dizionario `{termine: URL}` in memoria durante workflow
+- Prima di `notion-search` per termine: check cache
+- Se hit: usa URL cached (risparmia 1 API call)
+- Aggiungi a cache dopo ogni create/search riuscito
+- Reset cache a inizio nuovo workflow
+
+**Rate Limiting**:
+- Max 3 req/sec (inserisci pausa 350ms tra chiamate consecutive)
+- Batch operations quando possibile
+
+**Validazione pre-update** (spostata in PRE-FLIGHT sopra):
   - ✓ Tutti H2/H3 hanno ▶
   - ✓ Callout hanno color e icon validi (/icons/...)
   - ✓ Pitch esattamente 170-200 parole
@@ -716,6 +824,63 @@ Visualizza pagina: [URL Notion]
 - Se property "Argomenti correlati" non trovata → skip con warning
 - Se API rate limit → pausa 1s e retry (max 3)
 - Se match 0 → messaggio informativo
+
+---
+
+### WORKFLOW COMPLETO - SUMMARY FINALE
+
+**Obiettivo**: Riepilogo metriche e checklist qualità post-workflow
+
+**Quando eseguire**: Automaticamente alla fine Fase 5c (o 5 se skip_link=true)
+
+**Output Summary**:
+
+```markdown
+═══════════════════════════════════════════
+    WORKFLOW COMPLETO - RIEPILOGO FINALE
+═══════════════════════════════════════════
+
+📊 METRICHE CONTENUTO
+├─ Traccia H2: [N] pilastri
+├─ Pagina Notion: [N] parole totali
+│  ├─ Frasi totali: [N]
+│  ├─ Frasi >18 parole: [N] ([X]%)
+│  └─ Media parole/frase: [N.N]
+├─ Callout: [N] (⚠️[N] | ⭐[N] | 💡[N])
+├─ Domande: [N]
+├─ Chiarimenti: [N]
+├─ Elevator Pitch: [N] parole
+└─ Anki CORE: [N] carte
+
+🔗 PROPRIETÀ & LINKING
+├─ Voci totali: [N] (Eziologia:[N] | Clinica:[N] | Diagnosi:[N] | Terapia:[N])
+├─ Complessità: [Semplice/Media/Complessa]
+├─ Tempo studio: [N] min
+└─ Link automatici: [N] argomenti correlati
+
+⏱️  PERFORMANCE
+├─ Tempo totale: [N] min
+├─ API calls: [N] (cached: [N], retry: [N])
+└─ Termini cache hit rate: [X]%
+
+✅ CHECKLIST QUALITÀ CCI
+├─ [✓/✗] Main message in ogni H2
+├─ [✓/✗] Frasi ≤18 parole (≥90%)
+├─ [✓/✗] Numeri con unità
+├─ [✓/✗] Pitch 170-200 parole
+├─ [✓/✗] Anki ≤25 CORE, solo c1
+└─ [✓/✗] Pre-flight validation PASS
+
+🔗 LINK NOTION
+└─ [URL pagina pubblicata]
+
+═══════════════════════════════════════════
+```
+
+**Note**:
+- Summary è SOLO per visibilità utente (non salva in file)
+- Se checklist ≥2 ✗ → segnala warning e suggerisci correzioni
+- Metriche performance opzionali se non tracciabili
 
 ---
 

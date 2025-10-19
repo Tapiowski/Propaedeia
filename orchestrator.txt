@@ -101,15 +101,15 @@ Fase 5: Complessità + Tempo (1-2 min)
 ```
 Gruppo A completato - Contenuto studiabile
 
-Notion page: [URL]
-├─ Contenuto: [N] parole (CCI: PASS)
-├─ Callout: [N] (red:[N] | blue:[N] | green:[N])
-├─ Diagramma: [tipo] ([N] nodi)
-├─ Pitch: [N] parole
-├─ Status: Attivo
-└─ Tempo stimato: [N] min (complessità: [valore])
+Pagina Notion pubblicata: [URL]
 
-→ Digita 'continua' per Anki o 'ferma' per terminare
+Contenuto generato: [N] parole (CCI: PASS, frasi >18: <10%)
+Callout inseriti: [N] totali (red: [N], blue: [N], green: [N])
+Diagramma: [tipo] con [N] nodi
+Pitch: [N] parole, Status: Attivo
+Tempo stimato: [N] min (complessità: [valore])
+
+Digita 'continua' per generare Anki o 'ferma' per terminare.
 ```
 
 **[Pausa A]** - Attendi comando utente
@@ -128,11 +128,10 @@ Fase 6: Anki deck (5-8 min)
 ```
 Gruppo B completato - Anki pronto
 
-File: anki_deck.txt
-├─ Carte CORE: [N]/25
-└─ Anti-confusori: applicati
+File generato: anki_deck.txt
+Carte CORE: [N]/25 con anti-confusori applicati
 
-→ Digita 'continua' per proprietà DB o 'ferma' per terminare
+Digita 'continua' per aggiornare proprietà database o 'ferma' per terminare.
 ```
 
 **[Pausa B]** - Attendi comando utente
@@ -151,15 +150,12 @@ Fase 7: Proprietà Voci (3-5 min)
 ```
 Gruppo C completato - Database aggiornato
 
-Proprietà Voci: [N] termini
-├─ Eziologia: [N]
-├─ Clinica: [N]
-├─ Diagnosi: [N]
-└─ Terapia: [N]
+Proprietà Voci collegate: [N] termini totali
+Eziologia: [N], Clinica: [N], Diagnosi: [N], Terapia: [N]
 
 Workflow completato.
 
-→ Vuoi creare link automatici con argomenti correlati? Digita 'continua'
+Vuoi creare link automatici con argomenti correlati? Digita 'continua' oppure il workflow è completo.
 ```
 
 ---
@@ -314,20 +310,20 @@ Dopo aver stampato la traccia sopra, NON fermarti e NON aspettare comandi.
 
 Nota: H3 ha 1 TAB prima di ▶### per stare dentro H2
 
-## Step 2.1: Crea pagina database
+## Step 2.1: Cerca pagina esistente nel DB Argomenti
 
-Usa `notion-create-page`:
-```json
-{
-  "parent_database_id": "1b528251-9c2c-8080-bc5e-000bc6ea8d0e",
-  "title": "[Titolo Argomento]",
-  "icon": "📖",
-  "properties": {
-    "Argomento primario": true
-  },
-  "data_source_url": "collection://1b528251-9c2c-8065-a61e-000bfdfab7c7"
-}
-```
+**Database Argomenti**:
+- ID: `1b528251-9c2c-8080-bc5e-000bc6ea8d0e`
+- Data Source: `collection://1b528251-9c2c-8065-a61e-000bfdfab7c7`
+- Property titolo: **"Nome"** (non "title")
+
+**Ricerca**:
+1. Usa `notion-search` nel database Argomenti
+2. Filtra per:
+   - Nome = "[Titolo Argomento]" (es: "Sifilide")
+   - Argomento primario = true
+3. Se trovata: usa il page_id esistente
+4. Se NON trovata: ERRORE (la pagina deve esistere già nel DB)
 
 ## Step 2.2: Pubblica contenuto
 
@@ -361,43 +357,91 @@ Pagina pubblicata: [URL]
 
 ## Step 3.1: Generazione diagramma in memoria
 
+**Obiettivo**: generare diagrammi clinici in Mermaid con **stile MedGraph** (B/N + un unico accento #00E0CC), stampa/A11y-first, senza intestazioni.
+
 **Tipo** (auto-select):
-- Flowchart: algoritmi diagnostici/terapeutici
-- Timeline: decorso patologia
-- Mindmap: collegamenti fisiopatologici
+- Flowchart: algoritmi diagnostici/terapeutici (default TB; LR se rami orizzontali)
+- Timeline: decorso patologia/marcia atopica (preferisci LR)
+- Mindmap: collegamenti fisiopatologici (profondità ≤2)
+- Sankey: progressione complicanze cumulative (usa solo se chiaramente utile)
 
-**Limiti**:
-- Nodi: ≤11
-- Label: ≤4 parole/nodo
+**Limiti globali**:
+- Nodi: ≤11 totali
+- Label: concise ≤4 parole
+- Rami senza incroci
+- Niente dati cruciali nei tooltip
 
-**Palette MedGraph**:
-- Sfondo: #FFFFFF
-- Testo/linee: #000000
-- Accento: #00E0CC (solo step critico)
-- Contrasto: ≥4.5:1
+**Palette**:
+- Sfondo: bianco #FFFFFF
+- Testo/linee: **nero #000000**
+- **Un solo accento #00E0CC** per step o percorso critico (mai decorativo)
 
-**Template base**:
+**Contrasto**:
+- Testo: ≥4.5:1
+- Connettori: ≥3:1
+- Leggibile in scala di grigi
+
+**Bordi e linee**:
+- Bordi nodi: 1.2px (normali), **1.8px** per nodo/percorso in evidenza
+- Connettori: neri 1.2px
+- **Tratteggio** solo per rami opzionali/secondari
+- Vietati gradienti, texture, ombre pesanti (ombra ≤10% se proprio necessaria)
+
+**Forme consigliate**:
+- Processo: `[testo]` (rettangolo)
+- Decisione: `{testo}` (rombo)
+- Start/End: `((testo))` (terminatore)
+- Avviso/Rischio: nodo con classe `accent` o bordo 1.8px
+
+**Tipografia e layout**:
+- Sans di sistema
+- **Font ≥16px** (caption ≥12px, stampa ≥9pt)
+- Spaziatura generosa
+- Preferisci layout a **regola dei terzi**
+- Nessuna informazione solo-colore (duplica accento con bordo spesso o tratteggio)
+
+**Legenda/figcaption**: includi sempre breve didascalia/legenda testuale accanto al diagramma (fuori dal riquadro Mermaid)
+
+**Regole per tipo**:
+- Flowchart: TB per compattare, LR per sequenze ampie; decisioni in `{}`; opzionali con `dashed`
+- Timeline: nodi equispaziati, niente "salti" retrogradi; evidenzia **stadio chiave** con `accent`
+- Mindmap: 3-5 rami principali; profondità massima 2; un solo ramo o nodo in `accent`
+- Sankey: usa solo per flussi cumulativi chiari; rispetta BN + 1 accento; etichette brevi
+
+**Blocco init** (Mermaid):
+- Usa `theme: "base"` e `themeVariables` BN
+- Definisci tre classi: `normal` (default), `accent` (riempimento+bordo #00E0CC, bordo 1.8px), `dashed` (stroke-dasharray)
+
+**Uso dell'accento**:
+- Applica `:::accent` a **un solo nodo** o a una **catena unica** di passi critici
+- Non accentare più rami simultaneamente
+
+**Template base MedGraph**:
 ```mermaid
+%% MedGraph base (BN + un accento) %%
 %%{init: {
   "theme": "base",
   "themeVariables": {
-    "fontFamily": "ui-sans-serif, system-ui, sans-serif",
+    "fontFamily": "ui-sans-serif, system-ui, Helvetica Neue, Arial, sans-serif",
     "fontSize": "16px",
     "primaryColor": "#FFFFFF",
     "primaryBorderColor": "#000000",
     "primaryTextColor": "#000000",
-    "lineColor": "#000000"
+    "lineColor": "#000000",
+    "clusterBkg": "#FFFFFF",
+    "clusterBorderColor": "#000000"
   }
 }}%%
 flowchart TB
   classDef normal fill:#FFFFFF,stroke:#000000,stroke-width:1.2px,color:#000000;
   classDef accent fill:#00E0CC,stroke:#00E0CC,stroke-width:1.8px,color:#000000;
-  classDef dashed stroke-dasharray:4 2,stroke:#000000,fill:#FFFFFF;
+  classDef dashed stroke-dasharray:4 2,stroke:#000000,stroke-width:1.2px,color:#000000,fill:#FFFFFF;
 
-  A((Start)):::normal --> B[Processo]:::normal
-  B --> C{Decisione?}:::normal
-  C -- Si --> D[Step critico]:::accent
-  C -- No --> E[Follow-up]:::dashed
+  A((Start)):::normal --> B[Valuta sintomi]:::normal
+  B --> C{Red flags?}:::normal
+  C -- Sì --> D[Invio urgente]:::accent
+  C -- No --> E[Esami base]:::normal
+  E -. opzionale .-> F[Follow-up]:::dashed
 ```
 
 ## Step 3.2: Inserimento su Notion
@@ -517,15 +561,15 @@ Complessità: [valore] | Tempo stimato: [N] min
 ```
 Gruppo A completato - Contenuto studiabile
 
-Notion page: [URL]
-├─ Contenuto: [N] parole (CCI: PASS)
-├─ Callout: [N] (red:[N] | blue:[N] | green:[N])
-├─ Diagramma: [tipo] ([N] nodi)
-├─ Pitch: [N] parole
-├─ Status: Attivo
-└─ Tempo stimato: [N] min (complessità: [valore])
+Pagina Notion pubblicata: [URL]
 
-→ Digita 'continua' per Anki o 'ferma' per terminare
+Contenuto generato: [N] parole (CCI: PASS, frasi >18: <10%)
+Callout inseriti: [N] totali (red: [N], blue: [N], green: [N])
+Diagramma: [tipo] con [N] nodi
+Pitch: [N] parole, Status: Attivo
+Tempo stimato: [N] min (complessità: [valore])
+
+Digita 'continua' per generare Anki o 'ferma' per terminare.
 ```
 
 **[Pausa A]**
@@ -583,11 +627,10 @@ File generato: anki_deck.txt ([N] carte CORE)
 ```
 Gruppo B completato - Anki pronto
 
-File: anki_deck.txt
-├─ Carte CORE: [N]/25
-└─ Anti-confusori: applicati
+File generato: anki_deck.txt
+Carte CORE: [N]/25 con anti-confusori applicati
 
-→ Digita 'continua' per proprietà DB o 'ferma' per terminare
+Digita 'continua' per aggiornare proprietà database o 'ferma' per terminare.
 ```
 
 **[Pausa B]**
@@ -650,15 +693,12 @@ Usa `notion-update-page`:
 ```
 Gruppo C completato - Database aggiornato
 
-Proprietà Voci: [N] termini
-├─ Eziologia: [N]
-├─ Clinica: [N]
-├─ Diagnosi: [N]
-└─ Terapia: [N]
+Proprietà Voci collegate: [N] termini totali
+Eziologia: [N], Clinica: [N], Diagnosi: [N], Terapia: [N]
 
 Workflow completato.
 
-→ Vuoi creare link automatici con argomenti correlati? Digita 'continua'
+Vuoi creare link automatici con argomenti correlati? Digita 'continua' oppure il workflow è completo.
 ```
 
 ---
@@ -832,3 +872,9 @@ Fix v4.6 (riorganizzazione 3 gruppi + interfaccia):
 - Pulito: interfaccia elegante (no CAPS eccetto sigle, no === spam)
 - Output minimale: solo risultato + info breve
 - Timing ottimizzato: ~45-60 min totale
+
+Fix v4.6.1 (property Nome + output semplice + MedGraph):
+- Fix critical: Fase 2 cerca pagina esistente con property "Nome" (non "title")
+- Ricerca nel DB Argomenti: Nome = "[argomento]" + Argomento primario = true
+- Fix output: paragrafi semplici ed eleganti (rimossi simboli tree ├─ └─)
+- Reintegrato: regole MedGraph complete in Fase 3 (obiettivo, limiti, palette, contrasto, bordi, forme, tipografia, layout, legenda, regole per tipo, uso accento)

@@ -16,43 +16,36 @@ Il workflow applica rigorosamente i **Criteri CCI** (Chiarezza Clinica Integrata
 
 | File | Ruolo | Linee |
 |------|-------|-------|
-| **orchestrator.txt** | Motore workflow v4.3: 9 fasi lineari, pause obbligatorie, generazione reale pagina | ~816 |
+| **orchestrator.txt** | Motore workflow v4.4: scratchpad, oneshot, markdown semplice → Notion, MedGraph | ~780 |
 | **istruzioni.txt** | Custom instructions: CCI, vincoli fonte, limiti cognitivi, validazione | ~154 |
-| **Diagrammi.txt** | Specifiche MedGraph: palette B/N + accento #00E0CC, limiti nodi, template | ~62 |
-| **Capitalizzazione.txt** | Regole sentence case italiano (maiuscola solo prima parola + nomi propri) | ~19 |
 
-## Workflow Completo (v4.3)
+## Workflow Completo (v4.4)
 
-### BLOCCO 1: Contenuto (~35-45 min)
+### BLOCCO 1: AUTOMATICO (~35-45 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **1** | Traccia | Struttura H2/H3 (4-6 pilastri) | 5-10 min |
-| **2** | Pagina Notion | **Markdown completo in chat** (salvato in memoria), CCI check REALI | 15-25 min |
-| **3** | Elevator Pitch | Sintesi 170-200 parole (validazione strict) | 2-3 min |
-| **4** | Anki CORE | Max 25 flashcard con singola c1, file anki_deck.txt | 5-8 min |
-| **5** | Callout | Lista 3-5 callout clinici, inseriti in pagina salvata | 2-3 min |
-| **6** | Diagramma | Mermaid flowchart/timeline, inserito in pagina salvata | 2-3 min |
+| **1** | Traccia | Struttura H2/H3 in chat | 5-10 min |
+| **2** | Pagina Markdown | **Markdown SEMPLICE completo in chat** (salvato in memoria) | 15-25 min |
+| **3** | Elevator Pitch | Sintesi 170-200 parole in chat | 2-3 min |
+| **4** | Anki CORE | **FILE anki_deck.txt generato** (max 25 carte) | 5-8 min |
+| **5** | Callout | Lista 3-5 callout in chat, inseriti in pagina salvata | 2-3 min |
+| **6** | Diagramma | Codice Mermaid in chat, inserito in pagina salvata | 2-3 min |
+| **7** | Conversione + Pubblicazione | Markdown → Notion + update pagina + pitch | 1-2 min |
 
-Dopo ogni fase: attendi comando "continua"
+**Esecuzione automatica** senza pause fino a Fase 7
 
-### BLOCCO 2: Pubblicazione (~1-2 min)
+**[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 8 o "ferma"
 
-| Fase | Nome | Output | Tempo |
-|------|------|--------|-------|
-| **7** | Pubblicazione | Update pagina Notion esistente + pitch | 1-2 min |
-
-**[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 8 o "ferma" per terminare
-
-### BLOCCO 3: Proprietà (~3-5 min)
+### BLOCCO 2: Proprietà (~3-5 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **8** | Proprietà + DB Voci | Estrazione termini, batch processing DB, calcolo Complessità/Tempo | 3-5 min |
+| **8** | Proprietà + DB Voci | Estrazione termini, batch processing, calcolo Complessità/Tempo | 3-5 min |
 
 **[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 9 (opzionale) o "ferma"
 
-### BLOCCO 4: Link (~3-5 min, opzionale)
+### BLOCCO 3: Link (~3-5 min, opzionale)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
@@ -60,27 +53,27 @@ Dopo ogni fase: attendi comando "continua"
 
 **Tempo totale**: 55-65 min
 
-## Funzionalità Chiave (v4.3)
+## Funzionalità Chiave (v4.4)
 
-### 1. **Workflow Lineare con Pause Obbligatorie**
-- Esecuzione step-by-step con conferme esplicite
-- PAUSA OBBLIGATORIA dopo Fase 7 (pubblicazione)
-- PAUSA OBBLIGATORIA dopo Fase 8 (proprietà)
-- Comando "continua" per avanzare al blocco successivo
-- Comando "ferma" per terminare in qualsiasi momento
+### 1. **Scratchpad System + Oneshot Automatico**
+- Tracking stato workflow in memoria (fase corrente, outputs salvati, validation)
+- Esecuzione automatica BLOCCO 1 (fasi 1-7) senza interruzioni
+- Pause obbligatorie SOLO dopo Fase 7 e Fase 8
+- Comando "status" per visibilità real-time
+- Auto-avanzamento tra fasi fino a pubblicazione
 
-### 2. **Generazione Reale Pagina Notion**
-- Fase 2: genera TUTTA la pagina in markdown, output completo in chat
+### 2. **Markdown Semplice → Conversione Notion**
+- Fase 2: genera pagina in markdown STANDARD (`## Titolo`, non `>## Titolo`)
+- Output COMPLETO in chat (tutta la pagina visibile per validazione)
 - CCI check REALI dopo ogni H2 (non simulati)
-- Validazione incrementale con autocorrezione
-- Pagina salvata automaticamente in memoria
-- Zero placeholders, zero simulazioni
+- Pagina salvata in memoria come markdown semplice
+- Fase 7: conversione automatica markdown → formato Notion prima pubblicazione
 
-### 3. **Inserimento Callout e Diagrammi**
-- Fase 5: genera lista 3-5 callout, inseriscili nella pagina salvata
-- Fase 6: genera diagramma Mermaid, inseriscilo nella pagina salvata
-- Aggiornamento pagina in memoria prima pubblicazione
-- Output finale completo con tutti i componenti
+### 3. **File Anki Generato (non output chat)**
+- Fase 4: genera FILE `anki_deck.txt` nel progetto
+- Max 25 carte CORE con singola c1
+- Anti-confusori automatici (5 pattern)
+- Comunicazione chat: solo "File anki_deck.txt generato (N carte)"
 
 ### 4. **CCI Enforcement**
 - Validazione incrementale dopo ogni H2 generato
@@ -347,21 +340,26 @@ Vuoi continuare? [continua | ferma | status]
 
 ## Changelog Versioni
 
-### v4.3 (Simplified) - Corrente
-- **RIMOSSO**: scratchpad, oneshot, placeholders, emoji
-- **AGGIUNTO**: pause obbligatorie dopo Fase 7 e Fase 8
-- **FIX CRITICO**: generazione REALE pagina Notion (no simulazione)
-- **FIX CRITICO**: output completo pagina in chat (TUTTA la pagina visibile)
-- **FIX**: indentazione 2 spazi sotto H2, 4 spazi sotto H3 (NO TAB)
-- **SEMPLIFICATO**: workflow lineare chiaro, 816 linee (da 1624)
-- **MIGLIORATO**: CCI check REALI dopo ogni H2 (non simulati)
+### v4.4 (Fixed) - Corrente
+- **RIPRISTINATO**: scratchpad system, oneshot automatico fino a Fase 7
+- **FIX CRITICO**: Fase 2 genera markdown SEMPLICE (`## Titolo`, non `>## Titolo`)
+- **FIX CRITICO**: Fase 2 output COMPLETO in chat (tutta pagina visibile)
+- **FIX CRITICO**: Fase 4 genera FILE anki_deck.txt (non output chat)
+- **FIX CRITICO**: Fase 7 conversione markdown → Notion + pubblicazione
+- **MANTENUTO**: pause obbligatorie dopo Fase 7 e Fase 8
+- **MANTENUTO**: indentazione 2 spazi (H2), 4 spazi (H3), NO TAB
+- **OTTIMIZZATO**: 780 linee, workflow chiaro e funzionante
+
+### v4.3 (Simplified) - Deprecata
+- RIMOSSO scratchpad (ERRORE - era necessario)
+- RIMOSSO oneshot (ERRORE - causava pause ad ogni fase)
+- Fix indentazione e generazione reale (parziali)
 
 ### v4.2 (Production-Ready) - Deprecata
-- AUTO-START intelligente (causava problemi simulazione)
-- Pause strategiche (implementate male con oneshot)
-- Riorganizzazione fasi
-- Regole integrate Capitalizzazione e MedGraph
-- Fix indentazione (parziale)
+- AUTO-START intelligente
+- Scratchpad + oneshot
+- Formato Notion-ready in Fase 2 (ERRORE - complicato)
+- Placeholders per callout/diagramma (ERRORE - non funzionavano)
 
 ### v4.1 (Database Unificato)
 - 🗄️ **DB Voci unificato**: property "Categoria" multi_select sostituisce 4 relazioni separate
@@ -435,6 +433,6 @@ Formato con indentazione 2 spazi:
 
 ---
 
-**Ultimo aggiornamento**: v4.3 Simplified (2025)
+**Ultimo aggiornamento**: v4.4 Fixed (2025)
 **Piattaforma**: Claude Web Projects (browser)
 **Dipendenze**: API Notion (custom integration), Mermaid.js (diagrammi)

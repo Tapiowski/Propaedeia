@@ -20,18 +20,24 @@ Se l'utente carica **solo una sbobina** (PDF/MD/testo lungo) senza comandi:
 
 ## Comandi disponibili
 
+**Workflow principale**:
 ```
-workflow completo  # 8 fasi (~45-60 min) con 3 pause
+workflow completo  # 7 fasi (~45-60 min) con 3 pause - Gruppi A, B, C
 essenziale        # Solo fasi 1-2 (traccia + pagina)
 continua          # Procedi a gruppo successivo
 ferma             # Stop workflow
+```
+
+**Comandi separati** (NON parte del workflow):
+```
+link auto [argomento]       # Trova argomenti correlati via Voci
+link compare [arg1] [arg2]  # Crea pagina confronto differenziale
 ```
 
 Parametri opzionali:
 ```
 n=30              # Override limite Anki
 focus=diagnosi    # Restringe scope
-mode=comparativo  # Forza confronto A vs B
 ```
 
 ---
@@ -153,24 +159,7 @@ Gruppo C completato - Database aggiornato
 Proprietà Voci collegate: [N] termini totali
 Eziologia: [N], Clinica: [N], Diagnosi: [N], Terapia: [N]
 
-Workflow completato.
-
-Vuoi creare link automatici con argomenti correlati? Digita 'continua' oppure il workflow è completo.
-```
-
----
-
-## Opzionale - Link automatici (~3-5 min)
-
-Esecuzione solo dopo esplicito "continua" da Gruppo C
-
-```
-Fase 8: Link automatici (3-5 min)
-```
-
-**Output finale**:
-```
-Link creati: [N] collegamenti (score ≥2)
+Workflow completo terminato.
 ```
 
 ---
@@ -703,22 +692,33 @@ Vuoi creare link automatici con argomenti correlati? Digita 'continua' oppure il
 
 ---
 
-# Fase 8: Link automatici (opzionale)
+# Comando Link (separato da workflow)
 
-**[Esegui solo dopo esplicito "continua" da Gruppo C]**
+**Invocazione**: Solo su richiesta esplicita utente, NON parte del workflow completo/essenziale
 
-Se l'utente ha digitato "continua", procedi con questa fase.
-Altrimenti workflow terminato.
+**Due modalità**:
+```
+link auto [argomento]       # Trova e collega argomenti correlati
+link compare [arg1] [arg2]  # Crea pagina confronto differenziale
+```
 
-**Input**: Argomento con proprietà complete
+---
 
-## Step 8.1: Ricerca candidati
+## Modalità 1: Link Automatico
+
+**Comando**: `link auto [argomento]` o semplicemente su richiesta "trova argomenti correlati per Sifilide"
+
+**Input**: Nome argomento (es: "Carcinoma spinocellulare")
+
+**Obiettivo**: Trovare argomenti primari correlati e collegarli tramite property "Argomenti correlati" (self-relation su DB Argomenti)
+
+### Step 1.1: Ricerca candidati
 
 Usa `notion-search` su database Argomenti:
-- Filtra: `Argomento primario = YES`
+- Filtra: `Argomento primario = true`
 - Escludi: argomento corrente
 
-## Step 8.2: Calcolo match score
+### Step 1.2: Calcolo score correlazione via Voci
 
 Per ogni candidato:
 ```python
@@ -729,58 +729,185 @@ voci_corrente = get_voci(argomento_corrente)
 voci_candidato = get_voci(argomento_candidato)
 
 for cat in ["Eziologia", "Clinica", "Diagnosi", "Terapia"]:
-    termini_corrente = set([v.Name for v in voci_corrente if cat in v.Categoria])
-    termini_candidato = set([v.Name for v in voci_candidato if cat in v.Categoria])
+    termini_corrente = set([v.Nome for v in voci_corrente if cat in v.Categoria])
+    termini_candidato = set([v.Nome for v in voci_candidato if cat in v.Categoria])
 
     overlap = termini_corrente & termini_candidato
     if overlap:
         score += len(overlap)
         matches[cat] = list(overlap)
 
-# Soglia: score >= 2
+# Soglia: score >= 2 (almeno 2 voci condivise)
 ```
 
-## Step 8.3: Creazione pagine collegamento
+**Esempio**:
+- Carcinoma spinocellulare: Voci = [cheratina, UV, istopatologia, ...]
+- Carcinoma basocellulare: Voci = [UV, istopatologia, hedgehog, ...]
+- Overlap: [UV, istopatologia] → score = 2 ✓ correlati
+- Melanoma: Voci = [melanociti, BRAF, ...]
+- Overlap: [] → score = 0 ✗ non correlati
 
-Per ogni match con score ≥2:
+### Step 1.3: Update property "Argomenti correlati"
 
-Crea pagina collegamento nel DB Argomenti:
+Per ogni candidato con score ≥2:
+
+1. Aggiungi relazione bidirezionale:
+   - Da argomento corrente → candidato
+   - Da candidato → argomento corrente
+
+Usa `notion-update-page`:
 ```json
 {
-  "parent_database_id": "1b528251-9c2c-8080-bc5e-000bc6ea8d0e",
-  "title": "[Argomento A] ↔ [Argomento B]",
-  "icon": "🔗",
+  "page_id": "[page_id_corrente]",
+  "command": "update_properties",
   "properties": {
-    "Argomento primario": false,
-    "Link score": [score],
-    "Matches": "[categoria: termini, ...]"
+    "Argomenti correlati": "[\"url_candidato1\", \"url_candidato2\", ...]"
   }
 }
 ```
 
-Contenuto pagina:
-```
-# Collegamento [Argomento A] ↔ [Argomento B]
-
-Score: [N] | Match trovati:
-- Eziologia: [termini]
-- Clinica: [termini]
-- Diagnosi: [termini]
-- Terapia: [termini]
-
-## [Argomento A]
-[Link alla pagina A]
-
-## [Argomento B]
-[Link alla pagina B]
-
-## Perché collegarli?
-[Breve spiegazione del legame basato sui match]
-```
+Ripeti per ogni candidato (update inverso).
 
 **Output**:
 ```
-Link creati: [N] collegamenti (score ≥2)
+Argomenti correlati trovati: [N]
+
+[Argomento 1] - Score: [N] (match: Eziologia:[N], Clinica:[N], ...)
+[Argomento 2] - Score: [N] (match: ...)
+
+Property "Argomenti correlati" aggiornata su [N+1] pagine.
+```
+
+---
+
+## Modalità 2: Link Compare (Pagina Confronto)
+
+**Comando**: `link compare [arg1] [arg2] ...` o richiesta esplicita "crea pagina confronto tra Carcinoma spinocellulare e basocellulare"
+
+**Input**: Lista di 2-4 argomenti da confrontare
+
+**Obiettivo**: Creare pagina confronto differenziale nel DB Argomenti con:
+- Callout (differenze chiave)
+- Pitch (sintesi comparativa)
+- Diagramma (differenziazione)
+- Tabella comparativa
+- Property "Argomento primario" = false
+
+### Step 2.1: Fetch dati argomenti
+
+Per ogni argomento:
+1. Fetch pagina Notion completa
+2. Estrai Voci per categoria
+3. Estrai pitch
+4. Identifica differenze chiave
+
+### Step 2.2: Analisi differenziale
+
+```python
+differenze = {}
+similitudini = {}
+
+for cat in ["Eziologia", "Clinica", "Diagnosi", "Terapia"]:
+    voci_A = set(voci_argomento_A[cat])
+    voci_B = set(voci_argomento_B[cat])
+
+    differenze[cat] = {
+        "solo_A": list(voci_A - voci_B),
+        "solo_B": list(voci_B - voci_A)
+    }
+
+    similitudini[cat] = list(voci_A & voci_B)
+```
+
+### Step 2.3: Generazione contenuto pagina confronto
+
+**Titolo**: "[Argomento A] vs [Argomento B] - Confronto differenziale"
+
+**Struttura**:
+
+```
+▶## Quadro comparativo
+	Breve introduzione: cosa distingue A da B, quando sospettare uno vs altro.
+
+	<callout icon="/icons/warning_red.svg" color="red_bg">
+	<span color="red">Differenza critica: **[aspetto chiave]** distingue A da B</span>
+	</callout>
+
+▶## Tabella comparativa
+
+[Genera tabella Notion con colonne: Aspetto | Argomento A | Argomento B]
+
+Righe principali:
+- Eziologia: differenze[Eziologia]
+- Clinica: differenze[Clinica]
+- Diagnosi: differenze[Diagnosi]
+- Terapia: differenze[Terapia]
+
+▶## Diagramma decisionale
+
+[Genera Mermaid flowchart: partenza comune → decisioni che portano a A vs B]
+
+Esempio:
+```mermaid
+flowchart TB
+  A((Neoplasia cutanea)) --> B{Localizzazione?}
+  B -- Viso/collo --> C{Aspetto?}
+  C -- Perlaceo --> D[Carcinoma basocellulare]:::accent
+  C -- Cheratosico --> E[Carcinoma spinocellulare]:::accent
+```
+
+▶## Punti comuni
+	[Lista similitudini da similitudini dict]
+
+▶## Quando sospettare A vs B
+	Criteri decisionali pratici basati su differenze chiave
+```
+
+### Step 2.4: Generazione pitch comparativo
+
+**Regole**:
+- Lunghezza: 170-200 parole
+- Stile: "A e B sono entrambi... ma differiscono per..."
+- Focus: differenze clinicamente rilevanti
+- UNA frase grassetto: mossa decisiva differenziale
+
+### Step 2.5: Creazione pagina nel DB Argomenti
+
+Usa `notion-create-page`:
+```json
+{
+  "parent_database_id": "1b528251-9c2c-8080-bc5e-000bc6ea8d0e",
+  "title": "[Argomento A] vs [Argomento B]",
+  "icon": "⚖️",
+  "properties": {
+    "Argomento primario": false,
+    "Argomenti correlati": "[\"url_A\", \"url_B\", ...]",
+    "Pitch": "[pitch comparativo con **grassetto**]",
+    "Status argomento": "Attivo"
+  },
+  "data_source_url": "collection://1b528251-9c2c-8065-a61e-000bfdfab7c7"
+}
+```
+
+Poi pubblica contenuto con `notion-update-page` (replace_content).
+
+### Step 2.6: Update argomenti correlati
+
+Per ogni argomento originale (A, B, ...):
+- Aggiungi pagina confronto a "Argomenti correlati"
+- Aggiungi altri argomenti confrontati
+
+**Output**:
+```
+Pagina confronto creata: [URL]
+
+Contenuto generato:
+Tabella comparativa: [N] righe
+Diagramma: decisionale con [N] nodi
+Callout: [N] differenze chiave
+Pitch: [N] parole
+
+Property "Argomenti correlati" aggiornata su [N] pagine originali.
 ```
 
 ---
@@ -812,13 +939,14 @@ Link creati: [N] collegamenti (score ≥2)
 
 ---
 
-**Checkpoint v4.6**: Orchestrator riorganizzato in 3 gruppi.
+**Checkpoint v4.6.2**: Workflow 7 fasi + Link separato.
 
 Modifiche critiche da v4.5.8:
 - Riorganizzato: 3 gruppi (A: Contenuto, B: Anki, C: Database)
-- Rinumerato: 8 fasi totali (5+1+1+1 opzionale)
+- Workflow finale: 7 fasi totali (5+1+1), NO opzionali
 - Spostato: Complessità + Tempo da Fase 6 a nuova Fase 5 (fine Gruppo A)
 - Separato: Status+Tempo (Gruppo A) da Voci (Gruppo C)
+- Link: comando separato con 2 modalità (auto + compare)
 - Pulito: output elegante (no CAPS, no === spam)
 - Minimizzato: solo output richiesto + info breve
 - Mantenuto: tutto il dettaglio tecnico e validazione
@@ -878,3 +1006,12 @@ Fix v4.6.1 (property Nome + output semplice + MedGraph):
 - Ricerca nel DB Argomenti: Nome = "[argomento]" + Argomento primario = true
 - Fix output: paragrafi semplici ed eleganti (rimossi simboli tree ├─ └─)
 - Reintegrato: regole MedGraph complete in Fase 3 (obiettivo, limiti, palette, contrasto, bordi, forme, tipografia, layout, legenda, regole per tipo, uso accento)
+
+Fix v4.6.2 (Link separato da workflow):
+- Rimosso: Fase 8 Link dal workflow completo (non più opzionale)
+- Creato: comando Link separato con 2 modalità standalone
+- Modalità 1 (link auto): trova argomenti correlati via overlap Voci (score ≥2), aggiorna property "Argomenti correlati" (self-relation)
+- Modalità 2 (link compare): crea pagina confronto differenziale con callout, pitch, diagramma decisionale, tabella comparativa
+- Workflow finale: 7 fasi (5+1+1), Gruppi A/B/C senza opzionali
+- Property relazione: "Argomenti correlati" su DB Argomenti
+- Pagine confronto: Argomento primario = false, collegate bidirezionalmente

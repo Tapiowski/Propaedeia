@@ -63,19 +63,7 @@ Esecuzione dopo "continua"
 
 **Output finale**: Database aggiornato, workflow completato
 
-**[Fine]** - Opzionale: Digita 'continua' per link automatici
-
----
-
-### Opzionale - Link (~3-5 min)
-
-Esecuzione solo se richiesto dopo Gruppo C
-
-| Fase | Nome | Output | Tempo |
-|------|------|--------|-------|
-| **8** | Link automatici | Ricerca correlazioni (score ≥2), creazione pagine collegamento | 3-5 min |
-
-**Tempo totale**: 45-60 min
+**Tempo totale workflow**: 45-60 min
 
 ## Funzionalità Chiave (v4.6)
 
@@ -132,7 +120,31 @@ Pattern sistematici per evitare interferenza tra carte:
 ### 8. **Database Unificato Voci**
 - Property "Categoria" multi_select: ["Eziologia", "Clinica", "Diagnosi", "Terapia"]
 - Relazione bidirezionale con Argomenti
-- Batch processing Fase 8: search → create → update
+- Batch processing Fase 7: search → create → update
+
+## Comandi Separati
+
+### Link (NON parte del workflow)
+
+Invocazione solo su richiesta esplicita utente.
+
+**Modalità 1 - Link Automatico**:
+```
+link auto [argomento]
+```
+- Trova argomenti correlati via overlap Voci (score ≥2)
+- Aggiorna property "Argomenti correlati" (self-relation su DB Argomenti)
+- Update bidirezionale automatico
+- Esempio: Carcinoma spinocellulare ↔ Carcinoma basocellulare (overlap: UV, istopatologia)
+
+**Modalità 2 - Link Compare**:
+```
+link compare [arg1] [arg2] ...
+```
+- Crea pagina confronto differenziale nel DB Argomenti
+- Contenuto: callout differenze, pitch comparativo, diagramma decisionale, tabella comparativa
+- Property: Argomento primario = false, Argomenti correlati = [url_A, url_B, ...]
+- Collegamento bidirezionale con argomenti originali
 
 ## Output Generati
 
@@ -410,7 +422,20 @@ Collegamenti creati: 3
 
 ## Changelog Versioni
 
-### v4.6 (Clean Interface) - Corrente
+### v4.6.2 (Link Separato) - Corrente
+- **RIMOSSO**: Fase 8 Link dal workflow completo (non più opzionale)
+- **CREATO**: comando Link separato con 2 modalità standalone
+- **MODALITÀ 1** (link auto): trova argomenti correlati via overlap Voci (score ≥2), aggiorna property "Argomenti correlati" (self-relation)
+- **MODALITÀ 2** (link compare): crea pagina confronto differenziale con callout, pitch, diagramma decisionale, tabella comparativa
+- **WORKFLOW FINALE**: 7 fasi (5+1+1), Gruppi A/B/C senza opzionali
+- **TIMING**: workflow completo 45-60 min, link separati su richiesta
+
+### v4.6.1 (Property Nome + MedGraph)
+- **FIX CRITICAL**: Fase 2 cerca pagina esistente con property "Nome" (non "title")
+- **FIX OUTPUT**: paragrafi semplici ed eleganti (rimossi simboli tree)
+- **REINTEGRATO**: regole MedGraph complete in Fase 3
+
+### v4.6 (Clean Interface)
 - **RIORGANIZZATO**: 3 gruppi logici (A: Contenuto, B: Anki, C: Database) + 1 opzionale
 - **RINUMERATO**: 8 fasi totali (5+1+1+1 opzionale)
 - **SPOSTATO**: Complessità + Tempo da Fase 6 a nuova Fase 5 (fine Gruppo A)

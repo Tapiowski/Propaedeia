@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5.3 Simplified)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.4 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -195,23 +195,28 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
   Contenuto con 2 spazi iniziali
 
 >### Sottotitolo H3
-    Contenuto con 4 spazi iniziali
+    Contenuto con 4 spazi iniziali (NO linea vuota dopo H3)
 ```
 
 **Callout** (5-7 totali, distribuiti proporzionalmente tra H2):
 ```
   <callout icon="/icons/warning_red.svg" color="red_bg">
-  <span color="red">Controindicazione assoluta: testo critico</span>
+  Controindicazione assoluta: testo critico sicurezza
   </callout>
 
   <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
-  <span color="blue">Meccanismo fisiopatologico chiave</span>
+  Meccanismo fisiopatologico chiave da ricordare
   </callout>
 
   <callout icon="/icons/star_green.svg" color="green_bg">
-  <span color="green">Fatto nozionistico high-yield</span>
+  Fatto nozionistico high-yield essenziale
   </callout>
 ```
+
+CRITICAL - Formato callout:
+- Testo DIRETTAMENTE dentro callout (NO <span>, NO color="...")
+- Indentazione 2 spazi (stesso livello contenuto H2)
+- NO linee vuote dopo headers H3
 
 **Domande integrate**: 5-7 totali, formato `**Domanda clinica?**`
 
@@ -744,7 +749,7 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5.3**: Orchestrator semplificato.
+**CHECKPOINT v4.5.4**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
@@ -771,3 +776,8 @@ Fix v4.5.3 (pitch semplificato):
 - RIMOSSO: rich_text con grassetto (causava problemi)
 - SEMPLIFICATO: Pitch come text semplice
 - Property: "Pitch": "[testo]" (no array, no annotations)
+
+Fix v4.5.4 (callout + linee vuote):
+- FIX CRITICO: callout con testo DIRETTO (no <span color="...">, causava callout vuoti)
+- FIX: NO linee vuote dopo headers H3
+- Formato corretto: testo direttamente dentro <callout>...</callout>

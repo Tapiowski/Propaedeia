@@ -53,10 +53,27 @@ Linee: 1-1.5px nero #111111
 Tipografia: Sans-serif, max 2 font-weight
 
 ## STILE
+
+**Lingua e voce**:
 - Italiano medico standard
 - Voce attiva
 - Coerenza terminologica tra sezioni
 - Niente meta-frasi ("Ecco il risultato...")
+
+**Capitalizzazione** (sentence case):
+- **H1, H2, H3**: maiuscola solo prima parola + nomi propri
+- **NO Title Case** (maiuscola ogni parola, stile anglosassone)
+- **NO ALL CAPS** nei titoli
+- **Dopo due punti**: minuscolo (salvo nome proprio/acronimo)
+- **Acronimi**: maiuscoli (HIV, TC)
+- **Unità**: minuscole con spazi (10 mg)
+- **Farmaci**: principio attivo minuscolo ("metformina"), marchio maiuscolo ("Glucophage")
+- Stesso stile per tutti i livelli heading
+
+**Esempi**:
+- H1: "Insufficienza cardiaca: diagnosi e terapia"
+- H2: "Criteri di inclusione nello studio"
+- H3: "Prima linea: ACE-inibitori"
 
 ## PARAMETRI OPZIONALI
 Inserire PRIMA del contenuto nella chat:

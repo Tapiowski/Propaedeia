@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5.7 Simplified)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.8 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -6,6 +6,17 @@
 > - **Stile**: italiano medico standard, NO meta-frasi
 > - **Limiti cognitivi**: Callout 5-7, H2 4-6, Domande 5-7, Anki max 25
 > - **Validazione incrementale**: auto-check CCI INTERNO dopo ogni H2
+
+---
+
+## AUTO-START (riconoscimento automatico)
+
+SE l'utente carica **SOLO una sbobina** (PDF/MD/testo lungo) senza comandi:
+1. Stampa: "Sbobina rilevata. Avvio automatico workflow completo."
+2. **ESEGUI IMMEDIATAMENTE** Fase 1 (Traccia)
+3. Procedi con oneshot automatico fino a PAUSA 1
+
+Questo permette workflow completo con solo upload sbobina, senza digitare comandi.
 
 ---
 
@@ -197,33 +208,45 @@ CRITICAL - FORMATO TOGGLE:
 **Headers con toggle** (CRITICAL - formato corretto):
 ```
 ▶## Titolo H2
-	Contenuto con TAB (indentazione 1 livello)
+	Contenuto con 1 TAB (indentazione livello 1)
 
-▶### Sottotitolo H3
-		Contenuto con 2 TAB (indentazione 2 livelli, NO linea vuota dopo H3)
+	▶### Sottotitolo H3
+		Contenuto con 2 TAB (indentazione livello 2, NO linea vuota dopo H3)
 ```
+
+CRITICAL - Indentazione headers:
+- H2: indentazione 0 (nessun TAB prima di ▶##)
+- H3: indentazione 1 TAB prima di ▶### (per stare dentro H2)
+- Contenuto H2: 1 TAB
+- Contenuto H3: 2 TAB
 
 **Callout** (5-7 totali, distribuiti proporzionalmente tra H2):
 ```
   <callout icon="/icons/warning_red.svg" color="red_bg">
-  <span color="red">Controindicazione assoluta: testo critico sicurezza</span>
+  <span color="red">Controindicazione assoluta in **gravidanza** per rischio teratogeno</span>
   </callout>
 
   <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
-  <span color="blue">Meccanismo fisiopatologico chiave da ricordare</span>
+  <span color="blue">Paradosso: innesto **spesso** migliore estetica ma **difficile** attecchimento</span>
   </callout>
 
   <callout icon="/icons/star_green.svg" color="green_bg">
-  <span color="green">Fatto nozionistico high-yield essenziale</span>
+  <span color="green">Criterio diagnostico: valore soglia **>200 mg/dL** a digiuno</span>
   </callout>
 ```
+
+CRITICAL - Callout grassetto:
+- **NO titoli standard**: MAI usare "**Fatto high-yield**:" o "**Controindicazione**:"
+- Grassetto SOLO su parole chiave del contenuto specifico
+- Esempi CORRETTI: "in **gravidanza**", "valore **>200 mg/dL**", "**paradosso**"
+- Esempi SBAGLIATI: "**Avvertenza**: testo", "**High-yield**: fatto"
 
 CRITICAL - Formato Notion:
 - Toggle headers: usa ▶## (simbolo ▶ NON >)
 - Indentazione: usa TAB (NON spazi)
-- 1 TAB per contenuto sotto H2, 2 TAB per contenuto sotto H3
+- H3: 1 TAB prima di ▶### (per stare dentro H2)
+- Contenuto H2: 1 TAB, contenuto H3: 2 TAB
 - Callout: testo dentro <span color="red"> per colorare
-- Grassetto: usa **testo** dentro span o contenuto
 - NO linee vuote dopo headers H3
 
 **Domande integrate**: 5-7 totali, formato `**Domanda clinica?**`
@@ -236,10 +259,10 @@ CRITICAL - Formato Notion:
 	Secondo paragrafo. Continua sviluppo concetto.
 
 	<callout icon="/icons/warning_red.svg" color="red_bg">
-	<span color="red">Avvertenza critica **importante**</span>
+	<span color="red">Controindicazione in **gravidanza** e **allattamento**</span>
 	</callout>
 
-▶### Sottosezione dettaglio
+	▶### Sottosezione dettaglio
 		Contenuto con 2 TAB. Sviluppa sottotema specifico.
 
 		**Domanda clinica rilevante?**
@@ -247,6 +270,8 @@ CRITICAL - Formato Notion:
 ▶## Secondo pilastro
 	Nuovo contenuto H2...
 ```
+
+NOTA: H3 ha 1 TAB prima di ▶### per stare dentro H2
 
 ## Regole CCI
 
@@ -780,7 +805,7 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5.7**: Orchestrator semplificato.
+**CHECKPOINT v4.5.8**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
@@ -826,3 +851,10 @@ Fix v4.5.7 (CRITICO - toggle e indentazione):
 - FIX CRITICO: TAB invece di spazi (Enhanced Spec: "Use tabs for indentation")
 - Esempio completo struttura con formato corretto
 - Questo fix risolve: tutto in quote, headers rotti, indentazione sbagliata
+
+Fix v4.5.8 (auto-start + H3 + callout grassetto):
+- RIPRISTINATO: AUTO-START workflow completo quando caricata solo sbobina
+- FIX: H3 indentazione corretta (1 TAB prima di ▶### per nesting in H2)
+- FIX: Callout grassetto su keyword specifiche (NO titoli standard tipo "**Fatto high-yield**:")
+- Esempi CORRETTI: "in **gravidanza**", "valore **>200 mg/dL**", "**paradosso** dello spessore"
+- Esempi SBAGLIATI: "**Avvertenza**: testo", "**High-yield**: fatto"

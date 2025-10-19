@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5.5 Simplified)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.6 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -201,21 +201,21 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 **Callout** (5-7 totali, distribuiti proporzionalmente tra H2):
 ```
   <callout icon="/icons/warning_red.svg" color="red_bg">
-  <span style="color:red">Controindicazione assoluta: testo critico sicurezza</span>
+  <span color="red">Controindicazione assoluta: testo critico sicurezza</span>
   </callout>
 
   <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
-  <span style="color:blue">Meccanismo fisiopatologico chiave da ricordare</span>
+  <span color="blue">Meccanismo fisiopatologico chiave da ricordare</span>
   </callout>
 
   <callout icon="/icons/star_green.svg" color="green_bg">
-  <span style="color:green">Fatto nozionistico high-yield essenziale</span>
+  <span color="green">Fatto nozionistico high-yield essenziale</span>
   </callout>
 ```
 
-CRITICAL - Formato callout:
-- Testo dentro <span style="color:..."> per colorare il testo
-- Usa HTML standard: style="color:red" NON color="red"
+CRITICAL - Formato callout (Notion-flavored Markdown):
+- Testo dentro <span color="red"> per colorare (Notion standard, NON HTML style)
+- Per grassetto: usa **testo** dentro lo span
 - Indentazione 2 spazi (stesso livello contenuto H2)
 - NO linee vuote dopo headers H3
 
@@ -366,6 +366,7 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
   - Singola: Cos'è + Perché importante + Come gestire
   - Comparativa: Cosa distingue + Quando A vs B
 - Stile: CCI, frasi 12-15 parole
+- **UNA frase in grassetto** (mossa decisiva): usa **testo** per grassetto Markdown
 
 **Validazione interna**: se <170 o >200 parole → autocorreggi a ~185 parole
 
@@ -377,11 +378,13 @@ Usa `notion-update-page`:
   "page_id": "[page_id]",
   "command": "update_properties",
   "properties": {
-    "Pitch": "[testo pitch 170-200 parole]",
+    "Pitch": "[testo normale **testo grassetto** resto testo]",
     "Status argomento": "Attivo"
   }
 }
 ```
+
+CRITICAL: Notion mantiene il grassetto ** ** nella property text Pitch
 
 **Output** (messaggio conciso):
 ```
@@ -750,7 +753,7 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5.5**: Orchestrator semplificato.
+**CHECKPOINT v4.5.6**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
@@ -782,7 +785,11 @@ Fix v4.5.4 (callout + linee vuote):
 - TENTATIVO ERRATO: rimosso <span> completamente (causava perdita colore testo)
 - FIX: NO linee vuote dopo headers H3
 
-Fix v4.5.5 (callout HTML standard):
-- FIX DEFINITIVO: <span style="color:red"> invece di <span color="red">
-- HTML standard valido che Notion interpreta correttamente
-- Testo colorato + sfondo colorato + icona funzionanti
+Fix v4.5.5 (callout HTML):
+- TENTATIVO ERRATO: usato <span style="color:red"> (formato HTML non Notion)
+
+Fix v4.5.6 (formato Notion ufficiale):
+- FIX DEFINITIVO: <span color="red"> (Notion-flavored Markdown ufficiale)
+- Basato su Enhanced Markdown Specification Notion
+- Grassetto nei callout: **testo** (Markdown standard)
+- Pitch con grassetto: "testo **grassetto** resto" (Notion mantiene **)

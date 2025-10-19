@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+# Editor/IDE
+.vscode/
+.idea/
+# Credenziali/chiavi
+.env
+*.key
+# Cache python/node (se le usi)
+__pycache__/
+*.pyc
+node_modules/

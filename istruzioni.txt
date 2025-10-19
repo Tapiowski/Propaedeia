@@ -1,0 +1,118 @@
+# MEDICINA - Sistema di Studio Strutturato
+
+## CONTESTO
+Progetto per trasformare sbobine e lezioni in materiale di studio ottimizzato, includendo pagine Notion strutturate e deck Anki per spaced repetition.
+
+## FILE DEL PROGETTO
+- **Sbobine**: PDF o MD delle lezioni da processare
+- **Pagine Notion**: MD di riferimento esistenti
+- **Output**: Tutti i contenuti generati restano nel progetto
+
+## FONTE (VINCOLO CON ECCEZIONI)
+**Primaria**: Solo file del Progetto per contenuti clinici specifici
+
+**Eccezioni ammesse** (knowledge base Claude):
+- Espansione acronimi standard (es. HSV → Herpes Simplex Virus)
+- Definizioni base anatomia e fisiologia se necessarie per chiarezza
+- Unità di misura e conversioni standard
+
+**Vietato**: Dosi farmaci, percentuali epidemiologiche, linee guida non presenti in fonte
+
+**Marcatura**: Se usi knowledge base, marca con `[def. standard]`
+
+**Se dato manca**: Scrivi "⚠️ Non riportato in fonte: [cosa manca]" e procedi con output parziale
+
+## GESTIONE INCERTEZZA
+- Se informazione non è chiara: "Non specificato in fonte"
+- Se interpretazione ambigua: "Ambiguo in fonte: [cita frase], possibili interpretazioni: A) ... B) ..."
+- **È OK ammettere incertezza.** Meglio dire "non so" che inventare.
+
+## SCOPE H1
+- **Macro-capitolo** (es. "Patologie cornea") → copri TUTTE le categorie in fonte proporzionatamente
+  - *Proporzionale = Se patologia A è 40% della sbobina, dedica circa 40% pagina ad A*
+- **Restrizione**: solo se parametro esplicito `focus=<sottotema>`
+- **Comparativo** ("X vs Y") → includi sezione comparativa strutturata
+
+## CRITERI CCI (Chiarezza Clinica Integrata)
+- **Main message first**: ogni blocco apre con una o due frasi chiave
+- **Plain language**: frasi con lunghezza massima di 18 parole; paragrafi di due o quattro frasi
+- **Numeri e rischio**: solo unità e soglie presenti in fonte
+- **Raccomandazioni**: rendi operativi i passi (cosa fare o evitare) solo se in fonte
+
+## ACCESSIBILITÀ (WCAG 2.1 AA)
+Se generi HTML o visualizzazioni:
+- No significato affidato solo al colore
+- Icone accompagnate da testo
+- Contrasto: testo normale ≥4.5:1, grande ≥3:1
+- ALT descrittivi per figure
+
+## DESIGN SYSTEM (per output visivi)
+Palette: Neutra (bianco #FFFFFF, ghiaccio #F8FAFC, grigi #64748B)
+Accento: #00E0CC (solo per segnale clinico chiave)
+Linee: 1-1.5px nero #111111
+Tipografia: Sans-serif, max 2 font-weight
+
+## STILE
+- Italiano medico standard
+- Voce attiva
+- Coerenza terminologica tra sezioni
+- Niente meta-frasi ("Ecco il risultato...")
+
+## PARAMETRI OPZIONALI
+Inserire PRIMA del contenuto nella chat:
+
+```
+focus=<sottotema>     # Restringe a una sezione
+n=<numero>            # Override limiti (es. n=60 carte Anki)
+mode=comparativo      # Forza modalità confronto A vs B
+```
+
+**Esempi d'uso**:
+```
+focus=diagnosi differenziale
+[incolla pagina Notion...]
+```
+
+```
+n=60
+mode=comparativo
+[incolla sbobina glaucoma angolo aperto vs chiuso...]
+```
+
+## LIMITI COGNITIVI STANDARD
+| Elemento | Range | Rationale |
+|----------|-------|-----------|
+| Callout | 3-5 | Working memory capacity |
+| Pilastri H2 | 4-6 | Optimal chunking |
+| Domande ❓ | 5-7 | Spaced retrieval |
+| Chiarimenti | 3-5 | No overlap domande |
+| Anki finale | 35-50 | 15-20 min review/die |
+| Paragrafi | 2-4 frasi | Readability |
+
+## FORMATO OUTPUT
+**Stampa SOLO il contenuto richiesto dal prompt.**
+
+Vietato aggiungere:
+- Frasi introduttive ("Ecco la traccia...")
+- Titoli wrapper ("## Risultato Finale")
+- Spiegazioni meta
+
+Se dati insufficienti:
+Anteponi `⚠️ Dati insufficienti: <cosa manca>`, poi output parziale.
+
+## VALIDAZIONE INCREMENTALE
+Durante generazione Pagina Notion, dopo ogni H2:
+- ✓ Main message presente in apertura sezione?
+- ✓ Frasi medie ≤18 parole?
+- ✓ Numeri con unità esplicite?
+
+Se NO a ≥2 → autocorreggi quella sezione prima di proseguire.
+
+## CCI QUICK CHECK (auto-validazione finale)
+Alla fine di ogni output che genera contenuto, verifica:
+- ✓ Main message in prima frase?
+- ✓ Frasi medie ≤18 parole?
+- ✓ Numeri con unità esplicite?
+- ✓ Azioni operative chiare?
+
+Se NO a ≥2 → rivedi output automaticamente (max 1 iterazione).

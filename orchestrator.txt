@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5 Optimized)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.2 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -177,144 +177,78 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 
 **Input**: Traccia approvata
 
-**CRITICAL**: Genera pagina DIRETTAMENTE su Notion (no output lungo in chat)
+**CRITICAL**: Genera contenuto DIRETTAMENTE in formato Notion (no conversioni)
 
-## Step 2.1: Generazione Pagina in Memoria
+## Istruzioni Operative
 
-**Regole CCI**:
+1. **Usa la traccia** (H2/H3) per strutturare il contenuto
+2. **Genera contenuto** seguendo CCI e sviluppando ogni H2 della traccia
+3. **Inserisci 5-7 callout** automaticamente durante generazione
+4. **Valida CCI internamente** (frasi ≤18 parole, no output log lungo)
+5. **Pubblica su Notion** con replace_content
+
+## Formato Notion (diretto, no conversioni)
+
+**Headers con toggle**:
+```
+>## Titolo H2
+  Contenuto con 2 spazi iniziali
+
+>### Sottotitolo H3
+    Contenuto con 4 spazi iniziali
+```
+
+**Callout** (5-7 totali, distribuiti proporzionalmente tra H2):
+```
+  <callout icon="/icons/warning_red.svg" color="red_bg">
+  <span color="red">Controindicazione assoluta: testo critico</span>
+  </callout>
+
+  <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
+  <span color="blue">Meccanismo fisiopatologico chiave</span>
+  </callout>
+
+  <callout icon="/icons/star_green.svg" color="green_bg">
+  <span color="green">Fatto nozionistico high-yield</span>
+  </callout>
+```
+
+**Domande integrate**: 5-7 totali, formato `**Domanda clinica?**`
+
+## Regole CCI
+
 - Main message first (1-2 frasi chiave per H2)
-- Frasi <=18 parole (threshold rigido)
+- Frasi ≤18 parole (threshold rigido)
 - Paragrafi 2-4 frasi
 - Numeri con unità
 - Voce attiva
+- Validazione interna: se >20% frasi lunghe → autocorreggi
 
-**Struttura** (markdown semplice in memoria):
-- Usa esattamente H2/H3 della traccia
-- Headers STANDARD: `## Titolo`, `### Sottotitolo`
-- Domande integrate: 5-7 totali, formato `**Domanda clinica?**`
+## Sviluppo Contenuto per Tipo
 
-**Validazione CCI INTERNA** (dopo ogni H2):
+**Patologia**: Definizione + epidemio → Fisiopat → Clinica → Diagnosi + DD → Terapia → Prognosi
 
-```python
-# Genera H2 content
-h2_content = genera_h2_content(traccia_h2)
+**Farmaco**: Classe + meccanismo → Indicazioni → Farmacocinetica → Effetti avversi → Controindicazioni
 
-# Valida INTERNAMENTE (no output chat)
-frasi = split_sentences(h2_content)
-frasi_lunghe = [f for f in frasi if word_count(f) > 18]
-percentuale_lunghe = len(frasi_lunghe) / len(frasi) * 100
+**Procedura**: Indicazioni → Preparazione → Steps → Complicanze → Criteri successo
 
-# Log interno (opzionale, minimo)
-print(f"[H2.{n}] Frasi: {len(frasi)}, >18: {len(frasi_lunghe)} ({percentuale_lunghe:.1f}%)")
+## Ricerca Pagina + Pubblicazione
 
-# Autocorreggi SE necessario
-if percentuale_lunghe > 20:  # >20% frasi lunghe
-    h2_content = autocorreggi_frasi_lunghe(h2_content)
-    print(f"[H2.{n}] Autocorretto")
-
-# Salva in memoria
-pagina_markdown += h2_content
-```
-
-**Sviluppo Contenuto**:
-
-Patologia: Definizione + epidemio → Fisiopat → Clinica → Diagnosi + DD → Terapia → Prognosi
-
-Farmaco: Classe + meccanismo → Indicazioni → Farmacocinetica → Effetti avversi → Controindicazioni
-
-Procedura: Indicazioni → Preparazione → Steps → Complicanze → Criteri successo
-
-## Step 2.2: Generazione e Inserimento Callout (5-7 automatici)
-
-**CRITICAL**: Callout inseriti AUTOMATICAMENTE durante generazione
-
-**Regole**:
-- Numero: **5-7 totali** (limiti cognitivi aggiornati)
-- Distribuzione: 1-2 per H2
-- Priorità:
-  1. Controindicazioni assolute / salvavita
-  2. Red flags diagnostiche critiche
-  3. Errori comuni da evitare
-  4. Meccanismi fisiopatologici chiave
-  5. Differenze diagnostiche cruciali (se comparativo)
-
-**Sistema Classificazione** (formato markdown temporaneo):
-
-```markdown
-**[!] AVVERTENZA**: [testo critico sicurezza]
-
-**[i] PRINCIPIO**: [meccanismo fisiopatologico]
-
-**[*] HIGH-YIELD**: [fatto nozionistico chiave]
-```
-
-**Processo Interno**:
-```python
-# Dopo generazione pagina completa
-callout_list = genera_callout_automatici(pagina_markdown, n=5-7)
-
-# Per ogni callout
-for callout in callout_list:
-    # Identifica H2 destinazione
-    h2_target = identifica_h2_per_callout(callout)
-
-    # Inserisci in posizione appropriata
-    pagina_markdown = insert_callout_after_h2(pagina_markdown, h2_target, callout)
-
-# Salva count
-workflow_state["outputs"]["callout_count"] = len(callout_list)
-```
-
-## Step 2.3: Conversione Markdown → Notion Format
-
-**Conversioni automatiche**:
-
-1. **Toggle headers**: `## Titolo` → `>## Titolo`, `### Titolo` → `>### Titolo`
-
-2. **Indentazione**:
-   - Contenuto sotto H2: aggiungi 2 spazi iniziali a ogni riga
-   - Contenuto sotto H3: aggiungi 4 spazi iniziali a ogni riga
-
-3. **Callout format**:
-   ```python
-   # AVVERTENZA
-   "**[!] AVVERTENZA**: [testo]" →
-   '''  <callout icon="/icons/warning_red.svg" color="red_bg">
-     <span color="red">[testo]</span>
-     </callout>'''
-
-   # PRINCIPIO
-   "**[i] PRINCIPIO**: [testo]" →
-   '''  <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
-     <span color="blue">[testo]</span>
-     </callout>'''
-
-   # HIGH-YIELD
-   "**[*] HIGH-YIELD**: [testo]" →
-   '''  <callout icon="/icons/star_green.svg" color="green_bg">
-     <span color="green">[testo]</span>
-     </callout>'''
-   ```
-
-## Step 2.4: Ricerca Pagina Esistente
-
-Usa `notion-search`:
+1. Cerca pagina esistente (notion-search):
 ```json
 {
-  "query": "[titolo argomento]",
+  "query": "[titolo argomento dalla traccia]",
   "query_type": "internal",
   "data_source_url": "collection://1b528251-9c2c-8065-a61e-000bfdfab7c7"
 }
 ```
 
-## Step 2.5: Pubblicazione Diretta
-
-Usa `notion-update-page`:
+2. Pubblica contenuto (notion-update-page):
 ```json
 {
   "page_id": "[ID]",
   "command": "replace_content",
-  "new_str": "[pagina_notion_format con callout]"
+  "new_str": "[contenuto formato Notion con toggle, callout, indentazione]"
 }
 ```
 
@@ -473,7 +407,7 @@ Usa `notion-update-page`:
         {"text": {"content": " resto testo."}}
       ]
     },
-    "Status argomento": "In corso"
+    "Status argomento": "Attivo"
   }
 }
 ```
@@ -845,7 +779,7 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5**: Orchestrator ottimizzato.
+**CHECKPOINT v4.5.2**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
@@ -858,3 +792,12 @@ Modifiche critiche da v4.4:
 - RIDOTTO: tempo totale ~50-60 min (da ~55-65 min)
 - MANTENUTO: pause obbligatorie dopo fasi chiave
 - MANTENUTO: scratchpad system
+
+Fix v4.5.1 (istruzioni operative):
+- Istruzioni operative esplicite per oneshot (ESEGUI SUBITO, NON fermarti)
+- STOP QUI esplicito alle pause obbligatorie
+
+Fix v4.5.2 (generazione Notion):
+- RIMOSSO: conversioni markdown → Notion
+- SEMPLIFICATO: Fase 2 genera DIRETTAMENTE in formato Notion
+- FIX: Status argomento = "Attivo" (non "In corso")

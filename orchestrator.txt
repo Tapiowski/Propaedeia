@@ -161,9 +161,15 @@ Output: "DB aggiornato. Digita 'continua' per link (opzionale) o 'ferma'"
 [...4-6 H2 totali]
 ```
 
-**Post-output**:
-- Salva titolo e lista H2 in scratchpad
-- Auto-avanza a Fase 2 (oneshot)
+**PROCEDI IMMEDIATAMENTE (oneshot attivo)**:
+
+Dopo aver stampato la traccia sopra, NON fermarti e NON aspettare comandi dall'utente.
+
+1. Salva mentalmente: titolo argomento e lista H2 (scratchpad)
+2. Stampa: "Traccia completata. Procedo automaticamente alla Fase 2: Pagina Notion + Callout."
+3. **ESEGUI SUBITO** la FASE 2 sotto seguendo tutte le istruzioni
+
+Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 
 ---
 
@@ -318,10 +324,14 @@ Pagina pubblicata: [URL]
 Parole: [N] | CCI: PASS (frasi >18: X%) | Callout: [N] (RED:[N] | BLUE:[N] | GREEN:[N])
 ```
 
-**Post-output**:
-- Salva page_id in scratchpad
-- Marca `notion_published = True`
-- Auto-avanza a Fase 3 (oneshot)
+**PROCEDI IMMEDIATAMENTE (oneshot attivo)**:
+
+Dopo aver stampato l'output sopra, NON fermarti.
+
+1. Salva mentalmente: page_id, notion_published = True (scratchpad)
+2. **ESEGUI SUBITO** la FASE 3 sotto (Diagramma Mermaid)
+
+Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 
 ---
 
@@ -393,9 +403,14 @@ Usa `notion-append-block` o `notion-insert-block`:
 Diagramma inserito: [tipo] (N nodi)
 ```
 
-**Post-output**:
-- Marca `diagramma_inserito = True`
-- Auto-avanza a Fase 4 (oneshot)
+**PROCEDI IMMEDIATAMENTE (oneshot attivo)**:
+
+Dopo aver stampato l'output sopra, NON fermarti.
+
+1. Salva mentalmente: diagramma_inserito = True (scratchpad)
+2. **ESEGUI SUBITO** la FASE 4 sotto (Pitch Rich Text)
+
+Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 
 ---
 
@@ -486,17 +501,20 @@ Fase 5: File Anki (~5-8 min)
 Digita 'continua' per Anki o 'ferma' per terminare
 ```
 
-**[PAUSA OBBLIGATORIA 1]** Attendi comando utente.
+**[PAUSA OBBLIGATORIA 1]**
 
-**Post-output**:
-- Marca `pitch_inserito = True`
-- Salva word_count in scratchpad
+STOP QUI. Attendi comando utente: "continua" o "ferma".
+
+NON eseguire automaticamente la Fase 5. Oneshot mode disattivato fino a "continua".
 
 ---
 
 # FASE 5: FILE ANKI
 
-**[Esegui SOLO dopo comando "continua"]**
+**[ESEGUI SOLO dopo comando "continua"]**
+
+SE l'utente ha digitato "continua", procedi con questa fase.
+SE l'utente ha digitato "ferma", NON eseguire questa fase.
 
 **Input**: Pagina Notion pubblicata
 
@@ -551,16 +569,20 @@ Fase 6: Proprietà DB (~3-5 min)
 Digita 'continua' per proprietà o 'ferma' per terminare
 ```
 
-**[PAUSA OBBLIGATORIA 2]** Attendi comando utente.
+**[PAUSA OBBLIGATORIA 2]**
 
-**Post-output**:
-- Salva path in scratchpad
+STOP QUI. Attendi comando utente: "continua" o "ferma".
+
+NON eseguire automaticamente la Fase 6. Oneshot mode disattivato fino a "continua".
 
 ---
 
 # FASE 6: PROPRIETÀ DB
 
-**[Esegui SOLO dopo comando "continua"]**
+**[ESEGUI SOLO dopo comando "continua"]**
+
+SE l'utente ha digitato "continua", procedi con questa fase.
+SE l'utente ha digitato "ferma", NON eseguire questa fase.
 
 **Input**: Pagina Notion pubblicata
 
@@ -654,13 +676,20 @@ Fase 7: Link automatici (~3-5 min)
 Digita 'continua' per link o 'ferma' per terminare
 ```
 
-**[PAUSA OBBLIGATORIA 3]** Attendi comando utente.
+**[PAUSA OBBLIGATORIA 3]**
+
+STOP QUI. Attendi comando utente: "continua" o "ferma".
+
+NON eseguire automaticamente la Fase 7. Questa fase è OPZIONALE.
 
 ---
 
 # FASE 7: LINK AUTOMATICI
 
-**[Esegui SOLO dopo comando "continua"]**
+**[ESEGUI SOLO dopo comando "continua"]**
+
+SE l'utente ha digitato "continua", procedi con questa fase.
+SE l'utente ha digitato "ferma", workflow terminato.
 
 **Input**: Argomento con proprietà complete
 

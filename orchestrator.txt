@@ -396,18 +396,21 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 - **Applica regole CCI** (vedi Custom Instructions)
 - **Struttura**: Usa esattamente H2/H3 della traccia
 - **Toggle headers**: Aggiungi ▶ prima di ogni ## (H2) e ### (H3)
-- **Indentazione**: Indenta contenuto sotto headers con TAB
+- **Indentazione Notion** (CRITICAL - formato API):
+  - **1 livello sotto H2**: 2 spazi iniziali
+  - **2 livelli sotto H3**: 4 spazi iniziali
+  - **NO TAB** (incompatibile con Notion import)
 - **Callout inline esistenti**: 0-2 per sezione H2 (solo alert critici immediati, chiarimenti)
   ```markdown
-  	<callout color="gray_bg">
-  	**[Termine]**: [definizione <=90 parole]
-  	</callout>
+  <callout color="gray_bg">
+  **[Termine]**: [definizione <=90 parole]
+  </callout>
   ```
 - **Placeholder callout critici**: Inserisci dopo ogni H2 per callout Fase 2a
   ```markdown
-  	<!-- CALLOUT_PLACEHOLDER_H2_1 -->
-  	<!-- CALLOUT_PLACEHOLDER_H2_2 -->
-  	<!-- etc -->
+  <!-- CALLOUT_PLACEHOLDER_H2_1 -->
+  <!-- CALLOUT_PLACEHOLDER_H2_2 -->
+  <!-- etc -->
   ```
 - **Placeholder diagramma**: Inserisci prima di "## Perle del professore" (o alla fine)
   ```markdown
@@ -435,30 +438,30 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 **Procedura**: Indicazioni + razionale -> Preparazione + materiali -> Steps -> Complicanze + management -> Criteri successo
 
-**Formato Output Esempio**:
+**Formato Output Esempio** (INDENTAZIONE CON SPAZI):
 
 ```markdown
 # [Titolo Argomento]
 
 ▶## [H2 - Pilastro 1]
 
-	[Contenuto paragrafo 1 con main message...]
+  [Contenuto paragrafo 1 con main message...]
 
-	<!-- CALLOUT_PLACEHOLDER_H2_1 -->
+  <!-- CALLOUT_PLACEHOLDER_H2_1 -->
 
-	▶### [H3 - Sottosezione 1.1]
+  ▶### [H3 - Sottosezione 1.1]
 
-		[Contenuto sotto H3...]
+    [Contenuto sotto H3...]
 
-	[Contenuto paragrafo 2...]
+  [Contenuto paragrafo 2...]
 
-	**Domanda clinica rilevante?**
+  **Domanda clinica rilevante?**
 
 ▶## [H2 - Pilastro 2]
 
-	[Contenuto...]
+  [Contenuto...]
 
-	<!-- CALLOUT_PLACEHOLDER_H2_2 -->
+  <!-- CALLOUT_PLACEHOLDER_H2_2 -->
 
 [...continua per tutti H2]
 
@@ -466,10 +469,15 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ▶## Perle del professore
 
-	[Se presenti in fonte...]
+  [Se presenti in fonte...]
 ```
 
-**Output**: Stampa SOLO contenuto markdown Notion-ready, zero metadati.
+**Output**: NON stampare in chat. Salvare SOLO in memoria.
+
+**Comunicazione chat** (unico messaggio):
+```
+[Fase 1b] ✓ Completata ([N] parole, [M] H2)
+```
 
 **Post-output** (interno):
 - Salva in `workflow_state["outputs"]["pagina_notion_md"]`
@@ -502,13 +510,28 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
   4. Meccanismi fisiopatologici chiave (max 1-2)
   5. Differenze diagnostiche cruciali (se comparativo)
 
-**Sistema Classificazione**:
+**Sistema Classificazione** (INDENTAZIONE 2 SPAZI):
 - [!] **Avvertenza**: Critici per sicurezza, controindicazioni assolute, red flags diagnostiche
-  → `<callout icon="/icons/warning_red.svg" color="red_bg"><span color="red">[testo]</span></callout>`
+  → Formato:
+  ```markdown
+  <callout icon="/icons/warning_red.svg" color="red_bg">
+  <span color="red">[testo]</span>
+  </callout>
+  ```
 - [i] **Principio**: Meccanismi fisiopatologici, ragionamento "come/perché"
-  → `<callout icon="/icons/light-bulb_blue.svg" color="blue_bg"><span color="blue">[testo]</span></callout>`
+  → Formato:
+  ```markdown
+  <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
+  <span color="blue">[testo]</span>
+  </callout>
+  ```
 - [*] **High-Yield**: Fatti nozionistici (definizioni, criteri, terapie prima linea)
-  → `<callout icon="/icons/star_green.svg" color="green_bg"><span color="green">[testo]</span></callout>`
+  → Formato:
+  ```markdown
+  <callout icon="/icons/star_green.svg" color="green_bg">
+  <span color="green">[testo]</span>
+  </callout>
+  ```
 
 **Criteri Callout**:
 - Frase singola auto-esplicativa (no contesto aggiuntivo richiesto)
@@ -519,18 +542,18 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 1. **Analizza pagina salvata**: Identifica H2 e placeholder disponibili
 2. **Genera 3-5 callout**: Associa ogni callout a H2 specifico
-3. **Per ogni callout**:
+3. **Per ogni callout** (INDENTAZIONE 2 SPAZI):
    ```python
    # Identifica placeholder target
    placeholder = f"<!-- CALLOUT_PLACEHOLDER_H2_{N} -->"
 
-   # Formatta callout Notion
+   # Formatta callout Notion con 2 spazi per indentazione
    if tipo == "avvertenza":
-       callout_md = f'\t<callout icon="/icons/warning_red.svg" color="red_bg">\n\t<span color="red">{testo}</span>\n\t</callout>'
+       callout_md = f'  <callout icon="/icons/warning_red.svg" color="red_bg">\n  <span color="red">{testo}</span>\n  </callout>'
    elif tipo == "principio":
-       callout_md = f'\t<callout icon="/icons/light-bulb_blue.svg" color="blue_bg">\n\t<span color="blue">{testo}</span>\n\t</callout>'
+       callout_md = f'  <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">\n  <span color="blue">{testo}</span>\n  </callout>'
    elif tipo == "high_yield":
-       callout_md = f'\t<callout icon="/icons/star_green.svg" color="green_bg">\n\t<span color="green">{testo}</span>\n\t</callout>'
+       callout_md = f'  <callout icon="/icons/star_green.svg" color="green_bg">\n  <span color="green">{testo}</span>\n  </callout>'
 
    # Esegui str_replace
    pagina_md = workflow_state["outputs"]["pagina_notion_md"]
@@ -920,45 +943,96 @@ Poi aggiorna proprietà basilari:
 - Data Source: `collection://29028251-9c2c-8024-bd71-000bcc303592`
 - Property "Categoria": multi_select con opzioni ["Eziologia", "Clinica", "Diagnosi", "Terapia"]
 
-**Processo Ottimizzato**:
+**Processo BATCH Ottimizzato** (CRITICAL - previene blocchi):
 
-Per ogni termine estratto in Fase 3b (da tutte le categorie: Eziologia, Clinica, Diagnosi, Terapia):
+**Fase 1: BATCH SEARCH** (tutti termini insieme)
 
-1. **Cerca termine esistente** nel database Voci
-   - Usa `notion-search` con:
-     ```json
-     {
-       "query": "[termine]",
-       "query_type": "internal",
-       "data_source_url": "collection://29028251-9c2c-8024-bd71-000bcc303592"
-     }
-     ```
-   - Verifica se esiste già una voce con quel nome
+```python
+# Estrai TUTTI i termini da workflow_state
+tutti_termini = []
+for cat in ["eziologia", "clinica", "diagnosi", "terapia"]:
+    for termine in workflow_state["outputs"]["proprieta"][cat]:
+        tutti_termini.append({"termine": termine, "categoria": cat.capitalize()})
 
-2. **Se termine non esiste**: crea nuova voce
-   - Usa `notion-create-pages` con:
-     ```json
-     {
-       "parent": {"data_source_id": "29028251-9c2c-8024-bd71-000bcc303592"},
-       "pages": [{
-         "properties": {
-           "Name": "[termine]",
-           "Categoria": "[\"[categoria]\"]"  // JSON array: ["Eziologia"] o ["Clinica"] etc
-         }
-       }]
-     }
-     ```
-   - **IMPORTANTE**: "Categoria" è multi_select → passa come JSON string array
-   - Una voce può avere multiple categorie se il termine appare in più contesti
+# BATCH SEARCH in gruppi di 10 (evita overwhelm)
+batch_size = 10
+termini_trovati = {}  # {termine: URL}
+termini_da_creare = []
 
-3. **Colleziona URL** per costruire relazione unificata
-   - Gli URL tornano nel formato `{{https://...}}`
-   - **RIMUOVI le doppie graffe** → pulisci a `https://...`
-   - Aggiungi URL pulito a **lista unica** (non più 4 liste separate): `["url1", "url2", "url3", ...]`
+for i in range(0, len(tutti_termini), batch_size):
+    batch = tutti_termini[i:i+batch_size]
 
-4. **Converti lista unica in stringa JSON**:
-   - Lista: `["url1", "url2", "url3", "url4"]` → stringa `"[\"url1\", \"url2\", \"url3\", \"url4\"]"`
-   - **FORMATO CRITICO**: Proprietà relazionale sempre come **stringa JSON**
+    # Search batch (singola query per termine, ma in rapida successione)
+    for item in batch:
+        # Check cache PRIMA di search
+        if item["termine"] in cache_termini:
+            termini_trovati[item["termine"]] = cache_termini[item["termine"]]
+            continue
+
+        # Search
+        result = notion-search(item["termine"], db_voci)
+        if result:
+            url_pulito = result["url"].replace("{{", "").replace("}}", "")
+            termini_trovati[item["termine"]] = url_pulito
+            cache_termini[item["termine"]] = url_pulito  # Aggiungi a cache
+        else:
+            termini_da_creare.append(item)
+
+    # Pausa 500ms tra batch per rate limiting
+    if i + batch_size < len(tutti_termini):
+        sleep(0.5)
+```
+
+**Fase 2: BATCH CREATE** (tutti mancanti insieme)
+
+```python
+if termini_da_creare:
+    # Crea TUTTI i termini mancanti in UNA SOLA chiamata
+    pages_to_create = []
+    for item in termini_da_creare:
+        pages_to_create.append({
+            "properties": {
+                "Name": item["termine"],
+                "Categoria": f'["{item["categoria"]}"]'  # JSON string array
+            }
+        })
+
+    # BATCH CREATE (singola API call)
+    result = notion-create-pages({
+        "parent": {"data_source_id": "29028251-9c2c-8024-bd71-000bcc303592"},
+        "pages": pages_to_create
+    })
+
+    # Estrai URL creati
+    for i, created_page in enumerate(result["pages"]):
+        termine = termini_da_creare[i]["termine"]
+        url_pulito = created_page["url"].replace("{{", "").replace("}}", "")
+        termini_trovati[termine] = url_pulito
+        cache_termini[termine] = url_pulito  # Aggiungi a cache
+```
+
+**Fase 3: Costruzione relazione unificata**
+
+```python
+# Colleziona TUTTI gli URL in lista unica
+lista_url = list(termini_trovati.values())
+
+# Converti in stringa JSON
+relazione_voci_json = json.dumps(lista_url)  # → "[\"url1\", \"url2\", ...]"
+```
+
+**Progress Indicator durante processing**:
+```
+[Fase 5 Step B] Search batch 1/2 (10 termini)
+[Fase 5 Step B] Creazione batch: 5 nuove voci
+[Fase 5 Step B] ✓ Termini processati: 12/12 (cached: 3, created: 5, found: 4)
+```
+
+**BENEFICI**:
+- Riduzione 80% chiamate API (batch create vs individuale)
+- Cache evita ricerche duplicate
+- Pause controllate evitano rate limit
+- Progress visibile per debug
 
 **B2. Update Proprietà**
 

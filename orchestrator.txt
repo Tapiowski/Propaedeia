@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5.4 Simplified)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.5 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -201,20 +201,21 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 **Callout** (5-7 totali, distribuiti proporzionalmente tra H2):
 ```
   <callout icon="/icons/warning_red.svg" color="red_bg">
-  Controindicazione assoluta: testo critico sicurezza
+  <span style="color:red">Controindicazione assoluta: testo critico sicurezza</span>
   </callout>
 
   <callout icon="/icons/light-bulb_blue.svg" color="blue_bg">
-  Meccanismo fisiopatologico chiave da ricordare
+  <span style="color:blue">Meccanismo fisiopatologico chiave da ricordare</span>
   </callout>
 
   <callout icon="/icons/star_green.svg" color="green_bg">
-  Fatto nozionistico high-yield essenziale
+  <span style="color:green">Fatto nozionistico high-yield essenziale</span>
   </callout>
 ```
 
 CRITICAL - Formato callout:
-- Testo DIRETTAMENTE dentro callout (NO <span>, NO color="...")
+- Testo dentro <span style="color:..."> per colorare il testo
+- Usa HTML standard: style="color:red" NON color="red"
 - Indentazione 2 spazi (stesso livello contenuto H2)
 - NO linee vuote dopo headers H3
 
@@ -749,7 +750,7 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5.4**: Orchestrator semplificato.
+**CHECKPOINT v4.5.5**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
@@ -778,6 +779,10 @@ Fix v4.5.3 (pitch semplificato):
 - Property: "Pitch": "[testo]" (no array, no annotations)
 
 Fix v4.5.4 (callout + linee vuote):
-- FIX CRITICO: callout con testo DIRETTO (no <span color="...">, causava callout vuoti)
+- TENTATIVO ERRATO: rimosso <span> completamente (causava perdita colore testo)
 - FIX: NO linee vuote dopo headers H3
-- Formato corretto: testo direttamente dentro <callout>...</callout>
+
+Fix v4.5.5 (callout HTML standard):
+- FIX DEFINITIVO: <span style="color:red"> invece di <span color="red">
+- HTML standard valido che Notion interpreta correttamente
+- Testo colorato + sfondo colorato + icona funzionanti

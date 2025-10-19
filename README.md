@@ -16,64 +16,79 @@ Il workflow applica rigorosamente i **Criteri CCI** (Chiarezza Clinica Integrata
 
 | File | Ruolo | Linee |
 |------|-------|-------|
-| **orchestrator.txt** | Motore workflow v4.2: comandi, fasi 1-9, logica scratchpad, API Notion | ~1624 |
+| **orchestrator.txt** | Motore workflow v4.3: 9 fasi lineari, pause obbligatorie, generazione reale pagina | ~816 |
 | **istruzioni.txt** | Custom instructions: CCI, vincoli fonte, limiti cognitivi, validazione | ~154 |
 | **Diagrammi.txt** | Specifiche MedGraph: palette B/N + accento #00E0CC, limiti nodi, template | ~62 |
 | **Capitalizzazione.txt** | Regole sentence case italiano (maiuscola solo prima parola + nomi propri) | ~19 |
 
-## Workflow Completo (v4.2)
+## Workflow Completo (v4.3)
 
-### BLOCCO 1: Contenuto & Pubblicazione (~30-35 min) [ONESHOT]
+### BLOCCO 1: Contenuto (~35-45 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
 | **1** | Traccia | Struttura H2/H3 (4-6 pilastri) | 5-10 min |
-| **2** | Pagina Notion | Markdown Notion-ready (▶ toggle, indentazione, placeholders) | 15-25 min |
-| **3** | Callout | 3-5 callout clinici inseriti via str_replace (⚠️ red, ⭐ green, 💡 blue) | 1-2 min |
-| **4** | Elevator Pitch | Sintesi 170-200 parole (validazione strict) | 2-3 min |
-| **5** | Anki CORE | Max 25 flashcard con singola c1, file anki_deck.txt | 5-8 min |
-| **6** | Diagramma | Mermaid flowchart/timeline inserito via str_replace | 1-2 min |
-| **7** | Pubblicazione | Update pagina Notion esistente + pitch | 1 min |
+| **2** | Pagina Notion | **Markdown completo in chat** (salvato in memoria), CCI check REALI | 15-25 min |
+| **3** | Elevator Pitch | Sintesi 170-200 parole (validazione strict) | 2-3 min |
+| **4** | Anki CORE | Max 25 flashcard con singola c1, file anki_deck.txt | 5-8 min |
+| **5** | Callout | Lista 3-5 callout clinici, inseriti in pagina salvata | 2-3 min |
+| **6** | Diagramma | Mermaid flowchart/timeline, inserito in pagina salvata | 2-3 min |
 
-**[PAUSA STRATEGICA]** → Pagina pubblicata e studiabile, richiesta conferma utente per continuare
+Dopo ogni fase: attendi comando "continua"
 
-### BLOCCO 2: Proprietà & Linking (~5-10 min) [Opzionale]
+### BLOCCO 2: Pubblicazione (~1-2 min)
 
 | Fase | Nome | Output | Tempo |
 |------|------|--------|-------|
-| **8** | Proprietà + DB Voci | Estrazione termini (2-3 per categoria), batch processing DB unificato, calcolo Complessità/Tempo studio | 3-5 min |
+| **7** | Pubblicazione | Update pagina Notion esistente + pitch | 1-2 min |
+
+**[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 8 o "ferma" per terminare
+
+### BLOCCO 3: Proprietà (~3-5 min)
+
+| Fase | Nome | Output | Tempo |
+|------|------|--------|-------|
+| **8** | Proprietà + DB Voci | Estrazione termini, batch processing DB, calcolo Complessità/Tempo | 3-5 min |
+
+**[PAUSA OBBLIGATORIA]** Digita "continua" per Fase 9 (opzionale) o "ferma"
+
+### BLOCCO 4: Link (~3-5 min, opzionale)
+
+| Fase | Nome | Output | Tempo |
+|------|------|--------|-------|
 | **9** | Link Automatici | Ricerca argomenti correlati (score ≥2), creazione pagine collegamento | 3-5 min |
 
-**Tempo totale**: 55-65 min (Blocco 1: ~35 min, Blocco 2: ~8 min)
+**Tempo totale**: 55-65 min
 
-## Funzionalità Chiave (v4.2)
+## Funzionalità Chiave (v4.3)
 
-### 1. **Scratchpad System** (v4.0)
-- Tracking stato workflow in `workflow_state` (fase corrente, outputs salvati, validation)
-- Check prerequisiti automatico prima ogni fase
-- Performance metrics (API calls, cache hits, retry)
-- Comando `status` per visibilità real-time
+### 1. **Workflow Lineare con Pause Obbligatorie**
+- Esecuzione step-by-step con conferme esplicite
+- PAUSA OBBLIGATORIA dopo Fase 7 (pubblicazione)
+- PAUSA OBBLIGATORIA dopo Fase 8 (proprietà)
+- Comando "continua" per avanzare al blocco successivo
+- Comando "ferma" per terminare in qualsiasi momento
 
-### 2. **Oneshot Mode** (v4.2 - default)
-- Esecuzione automatica senza conferme manuali
-- Auto-avanzamento: 1→2→3→4→5→6→7→[PAUSA]→8→9
-- AUTO-START se sbobina PDF/MD allegata come unico file
-- Stop solo su errore o workflow completato
-- Modalità `manual_mode=true` disponibile per debug
+### 2. **Generazione Reale Pagina Notion**
+- Fase 2: genera TUTTA la pagina in markdown, output completo in chat
+- CCI check REALI dopo ogni H2 (non simulati)
+- Validazione incrementale con autocorrezione
+- Pagina salvata automaticamente in memoria
+- Zero placeholders, zero simulazioni
 
-### 3. **Zero Rigenerazione** (v4.0)
-- Fase 2: genera pagina GIÀ Notion-ready con placeholders
-- Fase 3: str_replace callout in placeholders (NO lista separata)
-- Fase 6: str_replace diagramma in placeholder (NO output chat)
-- Fase 7: upload DIRETTO da scratchpad (zero duplicazione lavoro)
+### 3. **Inserimento Callout e Diagrammi**
+- Fase 5: genera lista 3-5 callout, inseriscili nella pagina salvata
+- Fase 6: genera diagramma Mermaid, inseriscilo nella pagina salvata
+- Aggiornamento pagina in memoria prima pubblicazione
+- Output finale completo con tutti i componenti
 
-### 4. **CCI Enforcement** (v3.0)
+### 4. **CCI Enforcement**
 - Validazione incrementale dopo ogni H2 generato
 - Conteggi strict: max 18 parole/frase (threshold rigido, non media)
 - Auto-check finale: se ≥2 fail → autocorreggi (max 1 iterazione)
 - Pitch: validazione automatica 170-200 parole
 
-### 5. **Anti-confusori Anki** (v3.0)
+### 5. **Anti-confusori Anki**
 Pattern sistematici per evitare interferenza tra carte:
 - **Età/popolazione**: "nel *neonato*" vs "nell'*adulto* >65 anni"
 - **Temporalità**: "fase *acuta* (<72h)" vs "fase *cronica* (>3 mesi)"
@@ -81,16 +96,15 @@ Pattern sistematici per evitare interferenza tra carte:
 - **Localizzazione**: "ictus *emisfero dominante*"
 - **Contesto clinico**: "in *assenza di insufficienza renale*"
 
-### 6. **Retry Logic & Cache** (v3.0)
+### 6. **Retry Logic & Cache**
 - **Retry**: API timeout (3x), rate limit 429 (3x), server error 500+ (2x), network (3x)
-- **Cache termini**: dizionario {termine: URL} in sessione (riduce chiamate duplicate)
 - **Rate limiting**: 350ms tra chiamate consecutive, batch operations
 - **Backoff**: esponenziale (1s, 2s, 4s)
 
-### 7. **Database Unificato Voci** (v4.1)
+### 7. **Database Unificato Voci**
 - Property "Categoria" multi_select: ["Eziologia", "Clinica", "Diagnosi", "Terapia"]
 - Relazione bidirezionale con Argomenti
-- Batch processing Fase 8: search → create → update (-80% API calls)
+- Batch processing Fase 8: search → create → update
 
 ## Output Generati
 
@@ -122,17 +136,10 @@ Pattern sistematici per evitare interferenza tra carte:
 ## Comandi Disponibili
 
 ```bash
-workflow completo    # 9 fasi (~60-65 min) [ONESHOT: esecuzione automatica]
-essenziale          # 4 fasi (~25-30 min) [ONESHOT: solo Traccia+Pagina+Pitch+Proprietà]
-link [arg1] [arg2]  # Collegamenti clinici tra 2 argomenti (~5-8 min)
-pubblica notion     # Solo Fase 7 (se hai già tutti gli output)
-
-manual_mode=true    # Abilita conferme manuali tra fasi (default: oneshot)
-continua            # [Solo manual_mode] Procedi fase successiva
-modifica            # Rigenera fase corrente
-ferma               # Stop workflow
-salta               # Skip fase corrente
-status              # Mostra stato scratchpad corrente
+workflow completo  # 9 fasi (~55-65 min) con pause obbligatorie
+essenziale        # Solo fasi 1-3 (traccia, pagina, pitch)
+continua          # Procedi a blocco successivo (dopo pause)
+ferma             # Stop workflow
 ```
 
 ### Parametri Opzionali
@@ -340,12 +347,21 @@ Vuoi continuare? [continua | ferma | status]
 
 ## Changelog Versioni
 
-### v4.2 (Production-Ready) - Corrente
-- ✨ **AUTO-START intelligente**: rilevamento file unico → avvio automatico workflow
-- ⏸️ **Pause strategiche**: Blocco 1 (fasi 1-7) → PAUSA → Blocco 2 (fasi 8-9)
-- 🔢 **Riorganizzazione fasi**: rinumerate 1-9 (da 1a/1b/2a/3a...)
-- 📐 **Regole integrate**: Capitalizzazione sentence case, MedGraph template standardizzato
-- 🔧 **Fix critici**: indentazione 2 spazi (no TAB), batch processing Step 8c
+### v4.3 (Simplified) - Corrente
+- **RIMOSSO**: scratchpad, oneshot, placeholders, emoji
+- **AGGIUNTO**: pause obbligatorie dopo Fase 7 e Fase 8
+- **FIX CRITICO**: generazione REALE pagina Notion (no simulazione)
+- **FIX CRITICO**: output completo pagina in chat (TUTTA la pagina visibile)
+- **FIX**: indentazione 2 spazi sotto H2, 4 spazi sotto H3 (NO TAB)
+- **SEMPLIFICATO**: workflow lineare chiaro, 816 linee (da 1624)
+- **MIGLIORATO**: CCI check REALI dopo ogni H2 (non simulati)
+
+### v4.2 (Production-Ready) - Deprecata
+- AUTO-START intelligente (causava problemi simulazione)
+- Pause strategiche (implementate male con oneshot)
+- Riorganizzazione fasi
+- Regole integrate Capitalizzazione e MedGraph
+- Fix indentazione (parziale)
 
 ### v4.1 (Database Unificato)
 - 🗄️ **DB Voci unificato**: property "Categoria" multi_select sostituisce 4 relazioni separate
@@ -419,6 +435,6 @@ Formato con indentazione 2 spazi:
 
 ---
 
-**Ultimo aggiornamento**: v4.2 Production-Ready (2025)
-**Piattaforma**: Claude Web (browser), Claude Code (CLI)
+**Ultimo aggiornamento**: v4.3 Simplified (2025)
+**Piattaforma**: Claude Web Projects (browser)
 **Dipendenze**: API Notion (custom integration), Mermaid.js (diagrammi)

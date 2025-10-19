@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v4.5.6 Simplified)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.5.7 Simplified)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -187,15 +187,20 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
 4. **Valida CCI internamente** (frasi ≤18 parole, no output log lungo)
 5. **Pubblica su Notion** con replace_content
 
+CRITICAL - FORMATO TOGGLE:
+- Usa ▶## per toggle heading (NON >##, che crea quote!)
+- Usa TAB per indentazione (NON spazi, causano errori!)
+- Enhanced_Markdown_Specification: "Use tabs for indentation"
+
 ## Formato Notion (diretto, no conversioni)
 
-**Headers con toggle**:
+**Headers con toggle** (CRITICAL - formato corretto):
 ```
->## Titolo H2
-  Contenuto con 2 spazi iniziali
+▶## Titolo H2
+	Contenuto con TAB (indentazione 1 livello)
 
->### Sottotitolo H3
-    Contenuto con 4 spazi iniziali (NO linea vuota dopo H3)
+▶### Sottotitolo H3
+		Contenuto con 2 TAB (indentazione 2 livelli, NO linea vuota dopo H3)
 ```
 
 **Callout** (5-7 totali, distribuiti proporzionalmente tra H2):
@@ -213,13 +218,35 @@ Workflow oneshot: esecuzione continua fino a PAUSA OBBLIGATORIA 1.
   </callout>
 ```
 
-CRITICAL - Formato callout (Notion-flavored Markdown):
-- Testo dentro <span color="red"> per colorare (Notion standard, NON HTML style)
-- Per grassetto: usa **testo** dentro lo span
-- Indentazione 2 spazi (stesso livello contenuto H2)
+CRITICAL - Formato Notion:
+- Toggle headers: usa ▶## (simbolo ▶ NON >)
+- Indentazione: usa TAB (NON spazi)
+- 1 TAB per contenuto sotto H2, 2 TAB per contenuto sotto H3
+- Callout: testo dentro <span color="red"> per colorare
+- Grassetto: usa **testo** dentro span o contenuto
 - NO linee vuote dopo headers H3
 
 **Domande integrate**: 5-7 totali, formato `**Domanda clinica?**`
+
+**Esempio completo struttura**:
+```
+▶## Primo pilastro
+	Contenuto paragrafo con main message first. Max 18 parole per frase.
+
+	Secondo paragrafo. Continua sviluppo concetto.
+
+	<callout icon="/icons/warning_red.svg" color="red_bg">
+	<span color="red">Avvertenza critica **importante**</span>
+	</callout>
+
+▶### Sottosezione dettaglio
+		Contenuto con 2 TAB. Sviluppa sottotema specifico.
+
+		**Domanda clinica rilevante?**
+
+▶## Secondo pilastro
+	Nuovo contenuto H2...
+```
 
 ## Regole CCI
 
@@ -753,7 +780,7 @@ Properties:
 
 ---
 
-**CHECKPOINT v4.5.6**: Orchestrator semplificato.
+**CHECKPOINT v4.5.7**: Orchestrator semplificato.
 
 Modifiche critiche da v4.4:
 - SEMPLIFICATO: 7 fasi (da 9)
@@ -789,7 +816,13 @@ Fix v4.5.5 (callout HTML):
 - TENTATIVO ERRATO: usato <span style="color:red"> (formato HTML non Notion)
 
 Fix v4.5.6 (formato Notion ufficiale):
-- FIX DEFINITIVO: <span color="red"> (Notion-flavored Markdown ufficiale)
+- FIX: <span color="red"> (Notion-flavored Markdown ufficiale)
 - Basato su Enhanced Markdown Specification Notion
 - Grassetto nei callout: **testo** (Markdown standard)
 - Pitch con grassetto: "testo **grassetto** resto" (Notion mantiene **)
+
+Fix v4.5.7 (CRITICO - toggle e indentazione):
+- FIX CRITICO: ▶## invece di >## (era quote, non toggle!)
+- FIX CRITICO: TAB invece di spazi (Enhanced Spec: "Use tabs for indentation")
+- Esempio completo struttura con formato corretto
+- Questo fix risolve: tutto in quote, headers rotti, indentazione sbagliata

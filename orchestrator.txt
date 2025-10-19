@@ -1,4 +1,4 @@
-# ORCHESTRATOR - Sistema Studio Medicina (v3.0 Anki-Optimized)
+# ORCHESTRATOR - Sistema Studio Medicina (v4.0 Scratchpad & Oneshot)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto che includono:
 > - **CCI** (Chiarezza Clinica Integrata): main message first, frasi <=18 parole, numeri con unità, voce attiva
@@ -13,15 +13,17 @@
 ## COMANDI DISPONIBILI
 
 ```
-workflow completo    -> 9 fasi (~70 min) [INCLUDE PUBBLICAZIONE NOTION]
-essenziale          -> 4 fasi (~25-30 min)  
+workflow completo    -> 9 fasi (~60-65 min) [ONESHOT: esecuzione automatica]
+essenziale          -> 4 fasi (~25-30 min) [ONESHOT]
 link [arg1] [arg2]  -> Collegamenti clinici (~5-8 min)
 pubblica notion     -> Solo Fase 5 (se hai già tutti gli output)
 
-continua            -> Procedi fase successiva
+manual_mode=true     -> Abilita conferme manuali tra fasi (default: oneshot)
+continua            -> [Solo manual_mode] Procedi fase successiva
 modifica            -> Rigenera fase corrente
 ferma               -> Stop workflow
 salta               -> Skip fase corrente
+status              -> Mostra stato scratchpad corrente
 ```
 
 ---
@@ -49,6 +51,183 @@ Quale processare per questo workflow?
 
 ---
 
+# SCRATCHPAD - STATO WORKFLOW
+
+**Obiettivo**: Tracciare stato esecuzione per modalità oneshot e prevenire errori sequenza
+
+**Sistema di Tracking**:
+
+```python
+# SCRATCHPAD INTERNO (memoria chat, non stampare a utente)
+workflow_state = {
+    "workflow_type": "",           # "completo" | "essenziale" | "custom"
+    "fase_corrente": "",           # "1a" | "1b" | "2a" | "3a" | "3b" | "4a" | "4b" | "5" | "5c"
+    "fasi_completate": [],         # ["1a", "1b", ...]
+    "mode": "oneshot",             # "oneshot" | "manual"
+
+    "outputs": {
+        "titolo_argomento": "",
+        "traccia_h2": [],          # Lista H2 generati in 1a
+        "pagina_notion_md": "",    # Markdown Notion-ready (con ▶, TAB, placeholders)
+        "callout_posizionati": False,
+        "elevator_pitch": "",
+        "proprieta": {
+            "eziologia": [],
+            "clinica": [],
+            "diagnosi": [],
+            "terapia": [],
+            "complessita": "",
+            "tempo_studio": 0
+        },
+        "anki_deck_txt_generated": False,
+        "diagramma_inserito": False,
+        "notion_page_id": "",
+        "notion_published": False
+    },
+
+    "validation": {
+        "pre_flight_passed": False,
+        "cci_checks_passed": True,
+        "pitch_word_count": 0
+    },
+
+    "performance": {
+        "start_time": "",
+        "api_calls": 0,
+        "cache_hits": 0,
+        "retries": 0
+    }
+}
+```
+
+**Logica Pre-Fase** (esegui PRIMA di iniziare ogni fase):
+
+```python
+def check_prerequisites(fase_target):
+    """Verifica che prerequisiti siano completati"""
+
+    prerequisites = {
+        "1a": [],  # Nessun prerequisito
+        "1b": ["1a"],
+        "2a": ["1b"],
+        "3a": ["1b"],
+        "3b": ["1b"],
+        "4a": ["1b"],
+        "4b": ["1b"],
+        "5": ["1b", "2a", "3a", "3b", "4a", "4b"],
+        "5c": ["5"]
+    }
+
+    required = prerequisites.get(fase_target, [])
+    missing = [f for f in required if f not in workflow_state["fasi_completate"]]
+
+    if missing:
+        return {
+            "can_proceed": False,
+            "error": f"❌ Prerequisiti mancanti per fase {fase_target}: {missing}",
+            "suggestion": f"Completa prima: {', '.join(missing)}"
+        }
+
+    return {"can_proceed": True}
+```
+
+**Aggiornamento Post-Fase** (esegui DOPO completamento fase):
+
+```python
+def update_scratchpad_after_phase(fase_completata, output_data):
+    """Aggiorna stato dopo completamento fase"""
+
+    # Aggiungi a completate
+    if fase_completata not in workflow_state["fasi_completate"]:
+        workflow_state["fasi_completate"].append(fase_completata)
+
+    # Salva output specifico
+    if fase_completata == "1a":
+        workflow_state["outputs"]["titolo_argomento"] = output_data["titolo"]
+        workflow_state["outputs"]["traccia_h2"] = output_data["h2_list"]
+
+    elif fase_completata == "1b":
+        workflow_state["outputs"]["pagina_notion_md"] = output_data["markdown"]
+
+    elif fase_completata == "2a":
+        # Callout già inseriti in pagina_notion_md via str_replace
+        workflow_state["outputs"]["callout_posizionati"] = True
+
+    elif fase_completata == "3a":
+        workflow_state["outputs"]["elevator_pitch"] = output_data["pitch"]
+        workflow_state["validation"]["pitch_word_count"] = output_data["word_count"]
+
+    elif fase_completata == "3b":
+        workflow_state["outputs"]["proprieta"] = output_data["proprieta"]
+
+    elif fase_completata == "4a":
+        workflow_state["outputs"]["anki_deck_txt_generated"] = True
+
+    elif fase_completata == "4b":
+        # Diagramma già inserito in pagina_notion_md via str_replace
+        workflow_state["outputs"]["diagramma_inserito"] = True
+
+    elif fase_completata == "5":
+        workflow_state["outputs"]["notion_page_id"] = output_data["page_id"]
+        workflow_state["outputs"]["notion_published"] = True
+
+    # Determina prossima fase (se oneshot)
+    if workflow_state["mode"] == "oneshot":
+        return get_next_phase(fase_completata)
+    else:
+        return None  # Attendi comando "continua"
+```
+
+**Modalità Oneshot** (default):
+- Dopo ogni fase completata: auto-avanza a successiva
+- Nessuna conferma richiesta tra fasi
+- Mostra solo progress indicator
+- Stop solo se errore o workflow completato
+
+**Modalità Manual** (se `manual_mode=true`):
+- Dopo ogni fase: offri [CONTINUA] | [MODIFICA] | [FERMA]
+- Attendi input utente
+- Utile per debugging o workflow parziali
+
+**Comando `status`**:
+```markdown
+📊 WORKFLOW STATUS
+
+Tipo: [completo/essenziale]
+Modalità: [oneshot/manual]
+Fase corrente: [N]
+
+✅ Completate: [lista fasi]
+⏳ In corso: [fase]
+⏸️  Pending: [lista fasi rimanenti]
+
+Outputs salvati:
+├─ Titolo: [se presente]
+├─ Traccia H2: [N] pilastri
+├─ Pagina Notion: [parole] parole
+├─ Callout: [✓/✗] posizionati
+├─ Pitch: [N] parole
+├─ Proprietà: [✓/✗] estratte
+├─ Anki: [✓/✗] generato
+├─ Diagramma: [✓/✗] inserito
+└─ Notion: [✓/✗] pubblicato
+
+Validazioni:
+├─ Pre-flight: [✓/✗]
+├─ CCI checks: [✓/✗]
+└─ Pitch word count: [N]
+
+Performance:
+├─ Tempo trascorso: [min]
+├─ API calls: [N]
+├─ Cache hits: [N]
+└─ Retries: [N]
+```
+
+**Reset Scratchpad**: Automatico all'inizio nuovo workflow (rilevamento nuovo file input)
+
+---
+
 # WORKFLOW COMPLETO
 
 ## COMANDO: workflow completo
@@ -61,17 +240,114 @@ Quale processare per questo workflow?
 **Sequenza**:
 ```
 1a. TRACCIA (5-10 min)
-1b. PAGINA NOTION (15-25 min)
-2a. CALLOUT (3-5 min)
+1b. PAGINA NOTION (15-25 min) ← GIÀ Notion-ready (▶, TAB, placeholders)
+2a. CALLOUT (1-2 min) ← str_replace in pagina salvata
 3a. ELEVATOR PITCH (2-3 min)
 3b. PROPRIETÀ + VALUTAZIONE (2-3 min)
 4a. ANKI CORE (5-8 min) ← max 25 carte, output .txt
-4b. DIAGRAMMA (3-5 min)
-5.  PUBBLICAZIONE NOTION (3-5 min) ← UPDATE pagina + proprietà
-    5a. Import veloce content (2-3 min)
+4b. DIAGRAMMA (1-2 min) ← str_replace in pagina salvata
+5.  PUBBLICAZIONE NOTION (2-3 min) ← Upload pagina ready + proprietà
+    5a. Upload content (1 min) ← ZERO rigenerazione
     5b. Popolamento proprietà (1-2 min) ← DATABASE UNIFICATO
 5c. LINK AUTOMATICO (3-5 min) ← Opzionale
 ```
+
+**Tempo totale ottimizzato**: ~55-60 min (da ~70 min v2.5)
+
+---
+
+## MODALITÀ ONESHOT (default)
+
+**Comportamento automatico**: Dopo ogni fase completata, auto-avanza alla successiva senza conferme
+
+**Flusso Interno**:
+
+1. **Inizio workflow**: Inizializza scratchpad
+   ```python
+   workflow_state = reset_scratchpad()
+   workflow_state["workflow_type"] = "completo"
+   workflow_state["mode"] = "oneshot"  # default
+   workflow_state["fase_corrente"] = "1a"
+   ```
+
+2. **Prima di ogni fase**: Check prerequisiti
+   ```python
+   can_proceed = check_prerequisites(fase_target)
+   if not can_proceed["can_proceed"]:
+       STOP e mostra errore
+   ```
+
+3. **Durante fase**: Esegui operazioni + salva in scratchpad
+
+4. **Dopo fase completata**:
+   ```python
+   update_scratchpad_after_phase(fase_id, output_data)
+   workflow_state["fasi_completate"].append(fase_id)
+
+   if workflow_state["mode"] == "oneshot":
+       next_fase = get_next_phase(fase_id, workflow_type)
+       if next_fase:
+           print(f"[ONESHOT] Auto-avanzamento: {next_fase}")
+           execute_phase(next_fase)
+       else:
+           print("[WORKFLOW COMPLETATO]")
+           show_final_summary()
+   else:  # manual mode
+       print("[CONTINUA] | [MODIFICA] | [FERMA]")
+   ```
+
+**Ordine esecuzione fasi** (workflow completo):
+```
+1a → 1b → [2a, 3a, 3b, 4a, 4b in parallelo]* → 5 (5a → 5b) → 5c
+
+* Fasi parallele: esegui in sequenza ma senza dipendenze tra loro
+  Ordine suggerito: 2a, 4b (modificano pagina), poi 3a, 3b, 4a (indipendenti)
+```
+
+**Output utente durante oneshot**:
+```
+[Fase 1a] ✓ Completata
+[ONESHOT] Auto-avanzamento: 1b
+
+[Fase 1b] Generazione pagina: H2 3/5 completati
+[Fase 1b] ✓ Completata
+[ONESHOT] Auto-avanzamento: 2a
+
+[Fase 2a] ✓ Callout inseriti: 4 (⚠️2 | 💡1 | ⭐1)
+[ONESHOT] Auto-avanzamento: 3a
+
+[Fase 3a] ✓ Completata (185 parole)
+[ONESHOT] Auto-avanzamento: 3b
+
+[Fase 3b] ✓ Proprietà estratte
+[ONESHOT] Auto-avanzamento: 4a
+
+[Fase 4a] ✓ Deck Anki generato: anki_deck.txt (23 carte CORE)
+[ONESHOT] Auto-avanzamento: 4b
+
+[Fase 4b] ✓ Diagramma inserito: flowchart (10 nodi)
+[ONESHOT] Auto-avanzamento: 5
+
+[Fase 5 Step A] ✓ Pagina aggiornata: [URL]
+[Fase 5 Step B] Termini processati: 12/12 (cached: 3, created: 9)
+[Fase 5 Step B] ✓ Proprietà aggiornate
+[ONESHOT] Auto-avanzamento: 5c
+
+[Fase 5c] ✓ Collegamenti creati: 3
+[WORKFLOW COMPLETATO]
+
+[mostra SUMMARY FINALE]
+```
+
+**Modalità manual** (se `manual_mode=true`):
+- Dopo ogni fase: pausa e chiedi conferma
+- Utente deve digitare `continua` per avanzare
+- Utile per: debugging, workflow parziali, review intermedi
+
+**Stop automatico oneshot**:
+- Errore validation
+- Errore API (dopo retry esauriti)
+- Comando esplicito `ferma`
 
 ---
 
@@ -107,21 +383,37 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
-### FASE 1b: PAGINA NOTION
+### FASE 1b: PAGINA NOTION (Notion-ready markdown)
 
-**Obiettivo**: Sviluppare contenuto completo seguendo traccia
+**Obiettivo**: Sviluppare contenuto completo Notion-ready seguendo traccia
+
+**IMPORTANTE - Formato Notion-ready**:
+- Output GIÀ formattato per import diretto Notion
+- NO rigenerazione in Fase 5 (solo str_replace per callout/diagramma)
+- Markdown salvato in `workflow_state["outputs"]["pagina_notion_md"]`
 
 **Regole Specifiche Fase**:
 - **Applica regole CCI** (vedi Custom Instructions)
 - **Struttura**: Usa esattamente H2/H3 della traccia
-- **Callout inline**: 0-2 per sezione H2 (solo alert critici immediati)
-- **Domande integrate**: posiziona dopo blocchi dove testano comprensione, formato `**Domanda clinica?**`
-- **Chiarimenti**: diversi dalle domande, formato callout grigio senza icona:
+- **Toggle headers**: Aggiungi ▶ prima di ogni ## (H2) e ### (H3)
+- **Indentazione**: Indenta contenuto sotto headers con TAB
+- **Callout inline esistenti**: 0-2 per sezione H2 (solo alert critici immediati, chiarimenti)
   ```markdown
-  <callout color="gray_bg">
-  **[Termine]**: [definizione <=90 parole]
-  </callout>
+  	<callout color="gray_bg">
+  	**[Termine]**: [definizione <=90 parole]
+  	</callout>
   ```
+- **Placeholder callout critici**: Inserisci dopo ogni H2 per callout Fase 2a
+  ```markdown
+  	<!-- CALLOUT_PLACEHOLDER_H2_1 -->
+  	<!-- CALLOUT_PLACEHOLDER_H2_2 -->
+  	<!-- etc -->
+  ```
+- **Placeholder diagramma**: Inserisci prima di "## Perle del professore" (o alla fine)
+  ```markdown
+  <!-- DIAGRAMMA_PLACEHOLDER -->
+  ```
+- **Domande integrate**: posiziona dopo blocchi, formato `**Domanda clinica?**`
 - **Validazione incrementale**: applica auto-check CCI dopo ogni H2
 
 **Progress Indicator** (mostra durante generazione):
@@ -143,21 +435,66 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 **Procedura**: Indicazioni + razionale -> Preparazione + materiali -> Steps -> Complicanze + management -> Criteri successo
 
-**Output**: Stampa SOLO contenuto markdown pagina Notion, zero metadati.
+**Formato Output Esempio**:
+
+```markdown
+# [Titolo Argomento]
+
+▶## [H2 - Pilastro 1]
+
+	[Contenuto paragrafo 1 con main message...]
+
+	<!-- CALLOUT_PLACEHOLDER_H2_1 -->
+
+	▶### [H3 - Sottosezione 1.1]
+
+		[Contenuto sotto H3...]
+
+	[Contenuto paragrafo 2...]
+
+	**Domanda clinica rilevante?**
+
+▶## [H2 - Pilastro 2]
+
+	[Contenuto...]
+
+	<!-- CALLOUT_PLACEHOLDER_H2_2 -->
+
+[...continua per tutti H2]
+
+<!-- DIAGRAMMA_PLACEHOLDER -->
+
+▶## Perle del professore
+
+	[Se presenti in fonte...]
+```
+
+**Output**: Stampa SOLO contenuto markdown Notion-ready, zero metadati.
 
 **Post-output** (interno):
+- Salva in `workflow_state["outputs"]["pagina_notion_md"]`
+- Estrai lista H2 per conteggio
 - Esegui CCI Quick Check (main message, frasi ≤18, numeri con unità)
 - Se fail ≥2: autocorreggi internamente
-- Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
+- Update scratchpad: fase "1b" completata
+- Se oneshot: auto-avanza a fase successiva (2a, 3a, 3b, 4a, 4b paralleli)
+- Se manual: offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
-### FASE 2a: CALLOUT
+### FASE 2a: CALLOUT (str_replace in pagina)
 
-**Obiettivo**: Generare 3-5 callout clinici critici da pagina Notion
+**Obiettivo**: Generare e inserire 3-5 callout clinici critici nella pagina Notion salvata
+
+**IMPORTANTE - Nuovo flusso str_replace**:
+- NON generare lista separata
+- Genera callout E inseriscili direttamente in `workflow_state["outputs"]["pagina_notion_md"]`
+- Usa str_replace per sostituire placeholder `<!-- CALLOUT_PLACEHOLDER_H2_N -->`
+- Output chat: SOLO conferma inserimento
 
 **Regole Specifiche Fase**:
-- **Numero**: 3-5 callout (vedi limiti cognitivi CI)
+- **Numero**: 3-5 callout totali (vedi limiti cognitivi CI)
+- **Distribuzione**: Max 1-2 callout per H2 (usa placeholder disponibili)
 - **Priorita selezione**:
   1. Controindicazioni assolute / salvavita (sempre)
   2. Red flags diagnostiche critiche
@@ -167,33 +504,56 @@ Verifica H2 in range 4-6, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 **Sistema Classificazione**:
 - [!] **Avvertenza**: Critici per sicurezza, controindicazioni assolute, red flags diagnostiche
+  → `<callout icon="/icons/warning_red.svg" color="red_bg"><span color="red">[testo]</span></callout>`
 - [i] **Principio**: Meccanismi fisiopatologici, ragionamento "come/perché"
+  → `<callout icon="/icons/light-bulb_blue.svg" color="blue_bg"><span color="blue">[testo]</span></callout>`
 - [*] **High-Yield**: Fatti nozionistici (definizioni, criteri, terapie prima linea)
+  → `<callout icon="/icons/star_green.svg" color="green_bg"><span color="green">[testo]</span></callout>`
 
-**Criteri Output**:
+**Criteri Callout**:
 - Frase singola auto-esplicativa (no contesto aggiuntivo richiesto)
 - Max 2 item se inevitabile
-- **Cita sezione fonte specifica con localizzazione** (per posizionamento interno, NON appare nel callout finale)
+- Applica anti-confusori se necessario (vedi Fase 4a pattern)
 
-**Output**: Stampa SOLO lista callout (3-5), zero delimitatori.
+**Processo Interno** (NON mostrare a utente):
 
-```markdown
-[!] [Frase critica per sicurezza]
-Fonte: [H2] > [H3]
+1. **Analizza pagina salvata**: Identifica H2 e placeholder disponibili
+2. **Genera 3-5 callout**: Associa ogni callout a H2 specifico
+3. **Per ogni callout**:
+   ```python
+   # Identifica placeholder target
+   placeholder = f"<!-- CALLOUT_PLACEHOLDER_H2_{N} -->"
 
-[i] [Meccanismo o principio esplicativo]
-Fonte: [H2] > [H3]
+   # Formatta callout Notion
+   if tipo == "avvertenza":
+       callout_md = f'\t<callout icon="/icons/warning_red.svg" color="red_bg">\n\t<span color="red">{testo}</span>\n\t</callout>'
+   elif tipo == "principio":
+       callout_md = f'\t<callout icon="/icons/light-bulb_blue.svg" color="blue_bg">\n\t<span color="blue">{testo}</span>\n\t</callout>'
+   elif tipo == "high_yield":
+       callout_md = f'\t<callout icon="/icons/star_green.svg" color="green_bg">\n\t<span color="green">{testo}</span>\n\t</callout>'
 
-[*] [Fatto high-yield nozionistico]
-Fonte: [H2] > [H3]
+   # Esegui str_replace
+   pagina_md = workflow_state["outputs"]["pagina_notion_md"]
+   pagina_md_updated = pagina_md.replace(placeholder, callout_md)
+   workflow_state["outputs"]["pagina_notion_md"] = pagina_md_updated
+   ```
 
-[ripeti per 3-5 totali]
+4. **Rimuovi placeholder non usati**: Sostituisci con stringa vuota
+5. **Update scratchpad**: `workflow_state["outputs"]["callout_posizionati"] = True`
+
+**Output** (unico messaggio chat):
+
+```
+✓ Callout inseriti: N (⚠️[N] | 💡[N] | ⭐[N])
 ```
 
-**IMPORTANTE**: "Fonte:" serve SOLO per posizionamento interno callout nel testo. NON appare nel callout finale pubblicato.
-
 **Post-output** (interno):
-Verifica 3-5 callout, distribuzione tipologie, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
+- Verifica 3-5 callout totali
+- Verifica distribuzione tipologie
+- Verifica str_replace riusciti (no placeholder rimasti eccetto non usati)
+- Update scratchpad: fase "2a" completata
+- Se oneshot: auto-avanza (continua con altre fasi parallele o successiva)
+- Se manual: offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
@@ -384,9 +744,15 @@ Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
-### FASE 4b: DIAGRAMMA
+### FASE 4b: DIAGRAMMA (str_replace in pagina)
 
-**Obiettivo**: Generare diagramma clinico in Mermaid
+**Obiettivo**: Generare e inserire diagramma clinico Mermaid nella pagina Notion salvata
+
+**IMPORTANTE - Nuovo flusso str_replace**:
+- NON stampare diagramma in chat
+- Genera diagramma E inseriscilo direttamente in `workflow_state["outputs"]["pagina_notion_md"]`
+- Usa str_replace per sostituire placeholder `<!-- DIAGRAMMA_PLACEHOLDER -->`
+- Output chat: SOLO conferma inserimento
 
 **Regole Specifiche Fase**:
 - **Tipo**: Auto-select basato su contenuto
@@ -398,16 +764,35 @@ Offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 - **Nodi**: Max 10-12, labels concisi (<=5 parole)
 - **Leggibilità**: Font grande, contrasto 4.5:1
 
-**Output**: Stampa SOLO blocco mermaid, zero metadati.
+**Processo Interno** (NON mostrare a utente):
 
-````markdown
-```mermaid
-[codice diagramma - SOLO CODICE MERMAID QUI DENTRO]
+1. **Genera diagramma**: Crea codice mermaid appropriato
+2. **Formatta per Notion**:
+   ```python
+   diagramma_md = f"```mermaid\n{codice_mermaid}\n```"
+   ```
+3. **Esegui str_replace**:
+   ```python
+   placeholder = "<!-- DIAGRAMMA_PLACEHOLDER -->"
+   pagina_md = workflow_state["outputs"]["pagina_notion_md"]
+   pagina_md_updated = pagina_md.replace(placeholder, diagramma_md)
+   workflow_state["outputs"]["pagina_notion_md"] = pagina_md_updated
+   ```
+4. **Update scratchpad**: `workflow_state["outputs"]["diagramma_inserito"] = True`
+
+**Output** (unico messaggio chat):
+
 ```
-````
+✓ Diagramma inserito: [tipo] ([N] nodi)
+```
 
 **Post-output** (interno):
-Verifica tipo appropriato, max 10-12 nodi, leggibilità, offri -> [CONTINUA] | [MODIFICA] | [FERMA]
+- Verifica tipo appropriato
+- Verifica max 10-12 nodi
+- Verifica str_replace riuscito (no placeholder rimasto)
+- Update scratchpad: fase "4b" completata
+- Se oneshot: auto-avanza a Fase 5
+- Se manual: offri -> [CONTINUA] | [MODIFICA] | [FERMA]
 
 ---
 
@@ -417,29 +802,36 @@ Verifica tipo appropriato, max 10-12 nodi, leggibilità, offri -> [CONTINUA] | [
 
 **IMPORTANTE**: La pagina esiste GIÀ (creata a inizio esame). Usare UPDATE, non CREATE.
 
-**Prerequisiti** (da fasi precedenti):
-1. Titolo argomento (Fase 1a)
-2. Contenuto markdown (Fase 1b)
-3. Lista callout con Fonte (Fase 2a)
-4. Elevator pitch (Fase 3a)
-5. Termini proprietà + valutazione (Fase 3b)
-6. Diagramma mermaid (Fase 4b)
-7. File anki_deck.txt generato (Fase 4a)
+**Prerequisiti** (verificati da scratchpad):
+- Fase 1b completata: `workflow_state["outputs"]["pagina_notion_md"]` non vuota
+- Fase 2a completata: `workflow_state["outputs"]["callout_posizionati"]` = True
+- Fase 3a completata: `workflow_state["outputs"]["elevator_pitch"]` non vuoto
+- Fase 3b completata: `workflow_state["outputs"]["proprieta"]` compilato
+- Fase 4a completata: `workflow_state["outputs"]["anki_deck_txt_generated"]` = True
+- Fase 4b completata: `workflow_state["outputs"]["diagramma_inserito"]` = True
 
 **PRE-FLIGHT VALIDATION** (interno, prima di API calls):
 
-Esegui controlli rigorosi su tutti i prerequisiti:
-```
+Esegui controlli rigorosi usando scratchpad:
+```python
+# Verifica prerequisiti completati
+if "1b" not in workflow_state["fasi_completate"]:
+    ERROR: "Pagina Notion non generata"
+
+pagina_md = workflow_state["outputs"]["pagina_notion_md"]
+
+# Verifica formato
 ✓ Titolo: non vuoto, ≤100 caratteri
 ✓ H2: range 4-6, tutti hanno ▶
 ✓ H3: tutti hanno ▶
-✓ Callout: 3-5 totali, tutti hanno icon + color validi
-✓ Pitch: esattamente 170-200 parole (conteggio strict)
+✓ Callout: 3-5 totali inseriti, tutti hanno icon + color validi
+✓ Pitch: esattamente 170-200 parole
 ✓ Complessità: in ["Semplice", "Media", "Complessa"]
 ✓ Tempo studio: intero positivo, multiplo di 5
 ✓ Termini proprietà: 2-3 per categoria, non vuoti
-✓ Diagramma: blocco mermaid valido (apre con ```mermaid)
+✓ Diagramma: blocco mermaid inserito (cerca ```mermaid in pagina_md)
 ✓ anki_deck.txt: esiste, ≤25 linee, ogni linea ha {{c1::...}}
+✓ NO placeholder rimasti: cerca <!-- in pagina_md (se trovati → ERROR)
 ```
 
 **Se validation fail**: STOP e segnala errore specifico prima di chiamare API.
@@ -450,82 +842,48 @@ Esegui controlli rigorosi su tutti i prerequisiti:
 
 ---
 
-**STEP A: IMPORT VELOCE CONTENT** (~2-3 min)
+**STEP A: UPLOAD CONTENT** (~1-2 min)
 
 **A1. Ricerca Pagina Esistente**
 
 Usa `notion-search` con:
 ```json
 {
-  "query": "[Titolo argomento esatto]",
+  "query": "[workflow_state['outputs']['titolo_argomento']]",
   "query_type": "internal",
   "data_source_url": "collection://1b528251-9c2c-8065-a61e-000bfdfab7c7"
 }
 ```
 
 Se non trovata: ERRORE e chiedi conferma titolo esatto.
-Se trovata: salva page_id per update.
+Se trovata: salva in `workflow_state["outputs"]["notion_page_id"]` per update.
 
-**A2. Preparazione Content Markdown**
+**A2. Upload Content + Pitch** (ZERO rigenerazione)
 
-**A2.1 Conversione Toggle Headers**
-- Aggiungi ▶ prima di ogni ## (H2)
-- Aggiungi ▶ prima di ogni ### (H3)
-- Indenta contenuto sotto headers con TAB
-
-**A2.2 Inserimento Callout Strategico**
-Per ogni callout in lista (Fase 2a):
-1. Parse "Fonte: H2 > H3"
-2. Trova posizione esatta dopo sezione citata
-3. Converti tipo callout a formato Notion:
-   - [!] → `<callout icon="/icons/warning_red.svg" color="red_bg">` + testo con `<span color="red">`
-   - [*] → `<callout icon="/icons/star_green.svg" color="green_bg">` + testo con `<span color="green">`
-   - [i] → `<callout icon="/icons/light-bulb_blue.svg" color="blue_bg">` + testo con `<span color="blue">`
-4. Inserisci callout nella posizione corretta (indentato con TAB se dentro toggle)
-5. **NON includere "Fonte:" nel callout** - serve solo per posizionamento interno
-
-**Esempio formato callout corretto**:
-```markdown
-▶## Sezione
-	Contenuto prima del callout.
-	
-	<callout icon="/icons/warning_red.svg" color="red_bg">
-	<span color="red">Testo del callout colorato</span>
-	</callout>
-	
-	Contenuto dopo il callout.
+**Usa markdown GIÀ pronto da scratchpad**:
+```python
+pagina_md_ready = workflow_state["outputs"]["pagina_notion_md"]
+# Già contiene: ▶ headers, TAB indentation, callout inseriti, diagramma inserito
 ```
-
-**A2.3 Inserimento Diagramma**
-- Posizione: Prima di "## Perle del professore" se presente, altrimenti alla fine
-- Formato: Code block mermaid (SOLO codice dentro)
-
-```markdown
-```mermaid
-[codice diagramma - zero testo fuori]
-```
-```
-
-**A3. Update Pagina - Content + Pitch**
 
 Usa `notion-update-page` con:
 ```json
 {
-  "page_id": "[page_id trovato in A1]",
+  "page_id": "[workflow_state['outputs']['notion_page_id']]",
   "command": "replace_content",
-  "new_str": "[Markdown completo con toggle + callout + diagramma]"
+  "new_str": "[workflow_state['outputs']['pagina_notion_md']]"
 }
 ```
 
 Poi aggiorna proprietà basilari:
 ```json
 {
-  "page_id": "[page_id]",
+  "page_id": "[workflow_state['outputs']['notion_page_id']]",
   "command": "update_properties",
   "properties": {
-    "Pitch": "[Elevator pitch 170-200 parole]",
-    "Complessità": "[Semplice/Media/Complessa]",
-    "Tempo studio stimato": [numero_minuti],
+    "Pitch": "[workflow_state['outputs']['elevator_pitch']]",
+    "Complessità": "[workflow_state['outputs']['proprieta']['complessita']]",
+    "Tempo studio stimato": [workflow_state['outputs']['proprieta']['tempo_studio']],
     "Status argomento": "In corso"
   }
 }
@@ -534,10 +892,12 @@ Poi aggiorna proprietà basilari:
 **Output Step A**: Stampa SOLO link pagina, zero metadati verbose.
 
 ```
-Pagina aggiornata: [URL Notion]
+✓ Pagina aggiornata: [URL Notion]
 ```
 
-**Post-output interno**: Continua automaticamente a Step B (non chiedere conferma).
+**Post-output interno**:
+- Update scratchpad: `workflow_state["outputs"]["notion_published"]` = True (parziale, manca Step B)
+- Continua automaticamente a Step B (non chiedere conferma)
 
 ---
 
@@ -1023,10 +1383,48 @@ Properties:
 
 ---
 
-**CHECKPOINT ATTIVAZIONE**: Orchestrator v3.0 Anki-Optimized pronto. Quando utente allega file o scrive comando, attiva workflow appropriato.
+**CHECKPOINT ATTIVAZIONE**: Orchestrator v4.0 Scratchpad & Oneshot pronto. Quando utente allega file o scrive comando, attiva workflow appropriato.
 
-**Novità v3.0**:
+**Novità v4.0** (rivoluzionarie):
+
+**1. SCRATCHPAD System**:
+- Tracking stato workflow in memoria chat
+- Prerequisiti verificati automaticamente prima ogni fase
+- Outputs salvati incrementalmente
+- Validazioni tracciabili
+- Performance metrics
+- Comando `status` per visibilità completa
+
+**2. ONESHOT Mode (default)**:
+- Esecuzione automatica workflow completo senza conferme manuali
+- Auto-avanzamento tra fasi dopo completamento
+- Stop solo se errore o workflow completato
+- Modalità manual disponibile con `manual_mode=true`
+
+**3. Generazione Pagina Notion Ottimizzata**:
+- Fase 1b: genera markdown GIÀ Notion-ready (▶, TAB, placeholders)
+- Fase 2a: callout inseriti via str_replace (NO lista separata)
+- Fase 4b: diagramma inserito via str_replace (NO output chat)
+- Fase 5: ZERO rigenerazione pagina (upload diretto da scratchpad)
+- Risparmio tempo: ~10-15 min
+
+**4. Miglioramenti Performance**:
+- Tempo totale: ~55-60 min (da ~70 min v2.5)
+- Fase 2a: 1-2 min (da 3-5 min)
+- Fase 4b: 1-2 min (da 3-5 min)
+- Fase 5: 2-3 min (da 3-5 min)
+- Zero duplicazione sforzi
+
+**Workflow v4.0**:
+```
+Modalità: ONESHOT automatico
+1a → 1b (Notion-ready) → 2a (str_replace) → 3a → 3b → 4a → 4b (str_replace) → 5 (upload direct) → 5c → SUMMARY
+```
+
+**Mantenute da v3.0**:
 - Anki: SOLO CORE (max 25 carte high-yield)
-- Output: File anki_deck.txt con 1 carta/linea (zero output chat)
-- Tempo workflow ridotto: ~60-65 min (da ~70 min)
-- Validazione rafforzata formato Anki
+- Output: File anki_deck.txt con 1 carta/linea
+- CCI enforcement rigoroso
+- Anti-confusori Anki automatici
+- Retry logic & cache termini
+- Pre-flight validation

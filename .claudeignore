@@ -1,0 +1,25 @@
+# Claude Code ignore file
+# Files and directories to exclude from Claude context
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Git
+.git/
+.gitignore
+
+# Generated files (Anki output)
+anki_deck.txt
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml

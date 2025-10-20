@@ -11,10 +11,20 @@
 
 ## Auto-start
 
+**Scenario 1 - Sbobina singola**:
+
 Se l'utente carica **solo una sbobina** (PDF/MD/testo lungo) senza comandi:
 1. Stampa: "Sbobina rilevata. Avvio automatico workflow completo."
 2. Esegui immediatamente Fase 1 (Traccia)
 3. Procedi con esecuzione automatica fino a Pausa A
+
+**Scenario 2 - Sbobine multiple sullo stesso argomento**:
+
+Se l'utente carica **2+ documenti** sullo stesso argomento (es. melanoma da plastica + dermatologia):
+1. Stampa: "[N] sbobine rilevate sullo stesso argomento. Avvio integrazione fonti."
+2. Esegui immediatamente Fase 0 (Analisi e integrazione fonti)
+3. Poi procedi con Fase 1 usando piano integrazione
+4. Continua esecuzione automatica fino a Pausa A
 
 ---
 
@@ -51,6 +61,17 @@ workflow_state = {
     "workflow_type": "",      # "completo" | "essenziale"
     "fase_corrente": "",      # fase in esecuzione
     "fasi_completate": [],    # fasi completate
+
+    "fonti": {
+        "multi_doc": False,   # True se 2+ documenti
+        "documenti": [],      # Lista {nome, categoria, scope_coverage}
+        "piano_integrazione": {
+            "overlap": {},    # Aspetti coperti da 2+ fonti
+            "complementare": {},  # Aspetti unici per fonte
+            "conflitti": [],  # Discordanze da risolvere
+            "pesi_per_h2": {} # {h2_title: {fonte: peso%}}
+        }
+    },
 
     "outputs": {
         "titolo_argomento": "",
@@ -91,11 +112,12 @@ Aggiornamento dopo fase:
 
 # Workflow completo
 
-## Gruppo A - Contenuto Notion (~35-45 min)
+## Gruppo A - Contenuto Notion (~35-50 min)
 
-Esecuzione automatica fasi 1-5 → Pausa A
+Esecuzione automatica fasi 0-5 → Pausa A
 
 ```
+Fase 0: Analisi fonti (3-5 min, SOLO se multi-doc)
 Fase 1: Traccia (5-10 min)
 Fase 2: Pagina + Callout (15-25 min)
 Fase 3: Diagramma (2-3 min)
@@ -164,45 +186,236 @@ Workflow completo terminato.
 
 ---
 
+# Fase 0: Analisi e integrazione fonti
+
+**[Esegui SOLO se documenti multipli sullo stesso argomento]**
+
+**Input**: 2+ documenti PDF/MD (es. melanoma da plastica + dermatologia)
+
+**Obiettivo**: Analizzare scope di ogni fonte, identificare overlap/complementarietà/conflitti, generare piano integrazione per traccia unica.
+
+## Step 0.1: Analisi scope per documento
+
+Per ogni documento:
+
+**Identifica**:
+- Nome documento/fonte (es. "Sbobina Plastica chirurgica", "Dispensa Dermatologia")
+- Categoria fonte (Chirurgia, Medicina interna, Dermatologia, etc.)
+- Argomento principale (deve essere coerente tra documenti)
+
+**Valuta coverage per area** (score 0-3):
+- **Eziologia**: 0=assente, 1=cenni, 2=standard, 3=approfondita
+- **Clinica**: 0=assente, 1=cenni, 2=standard, 3=approfondita
+- **Diagnosi**: 0=assente, 1=cenni, 2=standard, 3=approfondita
+- **Terapia**: 0=assente, 1=cenni, 2=standard, 3=approfondita
+
+**Profondità generale**:
+- Superficiale: overview generale, pochi dettagli
+- Standard: trattazione completa base
+- Approfondita: focus specialistico, dettagli avanzati
+
+**Salva in scratchpad**:
+```python
+fonti.documenti = [
+    {
+        "nome": "Sbobina Plastica",
+        "categoria": "Chirurgia plastica",
+        "coverage": {"Eziologia": 1, "Clinica": 2, "Diagnosi": 1, "Terapia": 3},
+        "profondita": "Approfondita"
+    },
+    {
+        "nome": "Dispensa Dermatologia",
+        "categoria": "Dermatologia",
+        "coverage": {"Eziologia": 2, "Clinica": 3, "Diagnosi": 3, "Terapia": 2},
+        "profondita": "Standard"
+    }
+]
+```
+
+## Step 0.2: Identificazione overlap e complementarietà
+
+**Overlap** (aspetti coperti da 2+ fonti):
+- Per ogni area (Eziologia, Clinica, Diagnosi, Terapia)
+- Se 2+ documenti hanno score ≥1 → overlap presente
+- Identifica sottotemi specifici trattati da entrambi
+
+**Complementare** (aspetti unici per fonte):
+- Identifica sottotemi presenti solo in 1 documento
+- Aree con score alto (3) in una fonte e basso (0-1) in altre
+
+**Conflitti** (informazioni discordanti):
+- Cerca contraddizioni esplicite (es. dose farmaco, timing intervento)
+- Approcci divergenti (chirurgico vs conservativo)
+- Terminologia diversa per stesso concetto
+
+**Esempio analisi**:
+```python
+overlap = {
+    "Eziologia": ["esposizione UV", "fattori genetici"],
+    "Clinica": ["caratteristiche lesione", "evoluzione"],
+    "Diagnosi": ["biopsia", "dermatoscopia"],
+    "Terapia": ["escissione chirurgica"]
+}
+
+complementare = {
+    "Plastica": ["tecniche ricostruttive", "margini escissione", "innesti"],
+    "Dermatologia": ["staging TNM", "follow-up dermatoscopico", "terapia topica"]
+}
+
+conflitti = [
+    {
+        "area": "Terapia",
+        "descrizione": "Margini escissione: Plastica dice 1-2cm, Dermato dice 0.5-1cm",
+        "risoluzione": "Usa range più conservativo (1-2cm) da fonte chirurgica specializzata"
+    }
+]
+```
+
+## Step 0.3: Strategia integrazione e pesi
+
+**Calcolo pesi per H2 pilastro**:
+- Proporzionale a coverage score della fonte per quell'area
+- Fonte più specializzata ha priorità in caso di overlap
+
+**Esempio pesi**:
+```python
+pesi_per_h2 = {
+    "Eziologia e fattori di rischio": {
+        "Plastica": 30,  # coverage=1
+        "Dermatologia": 70  # coverage=2
+    },
+    "Quadro clinico": {
+        "Plastica": 40,  # coverage=2
+        "Dermatologia": 60  # coverage=3
+    },
+    "Diagnosi": {
+        "Plastica": 25,  # coverage=1
+        "Dermatologia": 75  # coverage=3
+    },
+    "Terapia chirurgica": {
+        "Plastica": 75,  # coverage=3, specializzata
+        "Dermatologia": 25  # coverage=2
+    }
+}
+```
+
+**Risoluzione conflitti**:
+- Priorità fonte più specializzata per quell'area
+- Se entrambe equivalenti: integra entrambe prospettive (es. "Margini: 0.5-2cm secondo complessità")
+- Segnala discordanze rilevanti in callout RED
+
+**Salva in scratchpad**:
+```python
+fonti.piano_integrazione = {
+    "overlap": overlap,
+    "complementare": complementare,
+    "conflitti": conflitti,
+    "pesi_per_h2": pesi_per_h2
+}
+fonti.multi_doc = True
+```
+
+## Output Fase 0
+
+**Stampa analisi**:
+```
+Analisi fonti completata ([N] documenti):
+
+[Doc 1]: [nome] - Focus [area principale, coverage score alto]
+[Doc 2]: [nome] - Focus [area principale, coverage score alto]
+
+Overlap identificato: [N] aree comuni
+Complementare: [N] aspetti unici totali
+Conflitti rilevati: [N] (risoluzione automatica via priorità specialistica)
+
+Piano integrazione generato con pesi proporzionali.
+```
+
+**Procedi immediatamente** (oneshot attivo):
+
+1. Salva piano_integrazione in scratchpad
+2. Stampa: "Fase 0 completata. Procedo alla Fase 1: Traccia integrata."
+3. Esegui subito Fase 1
+
+---
+
 # Fase 1: Traccia
 
-**Input**: Sbobina PDF/MD
+**Input**:
+- Sbobina PDF/MD (singola)
+- OPPURE piano_integrazione da Fase 0 (se multi-doc)
 
-**Regole**:
+**Regole base**:
 - Scope macro: copri TUTTO proporzionalmente
 - Se `focus=X`: zoom su sezione
 - H2 range: 4-6 pilastri
 
-**Output**: Stampa solo traccia markdown
+## Modalità singola fonte
 
+Analizza documento e crea traccia H2/H3 standard.
+
+## Modalità multi-fonte (se fonti.multi_doc = True)
+
+**Usa piano_integrazione da scratchpad**:
+
+1. **Pilastri H2**: basati su coverage combinata delle fonti
+   - Includi tutti aspetti (overlap + complementare)
+   - Ordine logico: Eziologia → Clinica → Diagnosi → Terapia
+
+2. **Note sviluppo per ogni H2**:
+   - Specifica peso fonti (es. "70% Dermatologia, 30% Plastica")
+   - Segnala aspetti complementari da integrare
+   - Evidenzia conflitti da risolvere
+
+**Esempio traccia integrata**:
 ```markdown
-# [Titolo Argomento]
+# Melanoma cutaneo
 
-## [H2 Pilastro 1]
--> Note sviluppo: [guida cosa includere]
+## Eziologia e fattori di rischio
+-> Sviluppo: 70% Dermatologia, 30% Plastica
+-> Focus: esposizione UV (overlap), genetica BRAF (Dermato), tipo pelle (Dermato)
 
-### [H3 Sottopunto 1.1] (opzionale)
--> [Breve nota]
+## Quadro clinico ed evoluzione
+-> Sviluppo: 60% Dermatologia, 40% Plastica
+-> Focus: caratteristiche ABCDE (overlap), staging TNM (Dermato), varianti istologiche (entrambe)
 
-## [H2 Pilastro 2]
--> [...]
+### Varianti anatomo-cliniche
+-> Sottotipi (SSM, nodulare, lentigo maligna, acrale)
 
-[...4-6 H2 totali]
+## Diagnosi
+-> Sviluppo: 75% Dermatologia, 25% Plastica
+-> Focus: dermatoscopia (Dermato), biopsia (overlap), imaging staging (Dermato)
+
+## Terapia chirurgica e ricostruttiva
+-> Sviluppo: 75% Plastica, 25% Dermatologia
+-> Focus: margini escissione (Plastica, CONFLITTO risolto: 1-2cm), tecniche ricostruttive (Plastica), linfonodo sentinella (overlap)
+-> NOTA CONFLITTO: Margini (Plastica: 1-2cm vs Dermato: 0.5-1cm) → usa range chirurgico
+
+### Tecniche ricostruttive
+-> Innesti, lembi, chiusura diretta (Plastica specializzata)
+
+## Terapie adiuvanti e follow-up
+-> Sviluppo: 60% Dermatologia, 40% Plastica
+-> Focus: immunoterapia (Dermato), target therapy (Dermato), follow-up dermatoscopico (Dermato)
 ```
+
+**Output**: Stampa traccia integrata con note pesi
 
 **Procedi immediatamente** (oneshot attivo):
 
 Dopo aver stampato la traccia sopra, NON fermarti e NON aspettare comandi.
 
 1. Salva mentalmente: titolo argomento e lista H2 (scratchpad)
-2. Stampa: "Traccia completata. Procedo alla Fase 2: Pagina Notion."
+2. Stampa messaggio appropriato:
+   - Singola: "Traccia completata. Procedo alla Fase 2: Pagina Notion."
+   - Multi-doc: "Traccia integrata completata ([N] fonti integrate). Procedo alla Fase 2."
 3. Esegui subito la Fase 2
 
 ---
 
 # Fase 2: Pagina Notion + Callout
 
-**Input**: Traccia approvata
+**Input**: Traccia approvata (singola o integrata)
 
 **Critical**: Genera contenuto DIRETTAMENTE in formato Notion (no conversioni)
 
@@ -210,6 +423,20 @@ Dopo aver stampato la traccia sopra, NON fermarti e NON aspettare comandi.
 
 1. Usa la traccia (H2/H3) per strutturare il contenuto
 2. Genera contenuto seguendo CCI e sviluppando ogni H2
+
+**Se multi-doc (fonti.multi_doc = True)**:
+   - Per ogni H2, usa pesi da piano_integrazione.pesi_per_h2
+   - Integra informazioni da entrambe fonti proporzionalmente
+   - Esempio: H2 "Terapia" con peso Plastica 75%, Dermato 25%:
+     - 75% spazio a tecniche ricostruttive (Plastica)
+     - 25% a terapie adiuvanti/follow-up (Dermato)
+   - Aspetti complementari: includi tutti (es. innesti da Plastica + immunoterapia da Dermato)
+   - Conflitti: risolvi secondo piano (es. margini: usa valore fonte specializzata)
+   - Segnala conflitti risolti in callout RED se clinicamente rilevanti
+
+**Se singola fonte**:
+   - Sviluppa normalmente da unico documento
+
 3. Inserisci 5-7 callout automaticamente durante generazione
 4. Valida CCI internamente (frasi ≤18 parole, no output log lungo)
 5. Pubblica su Notion con replace_content
@@ -878,7 +1105,6 @@ Usa `notion-create-page`:
 {
   "parent_database_id": "1b528251-9c2c-8080-bc5e-000bc6ea8d0e",
   "title": "[Argomento A] vs [Argomento B]",
-  "icon": "⚖️",
   "properties": {
     "Argomento primario": false,
     "Argomenti correlati": "[\"url_A\", \"url_B\", ...]",
@@ -936,6 +1162,20 @@ Property "Argomenti correlati" aggiornata su [N] pagine originali.
 | **Frasi** | ≤18 parole | Sentence complexity (threshold rigido) |
 | **Pitch** | 170-200 parole | Elevator pitch standard |
 | **Diagramma nodi** | ≤11 | Visual clarity |
+
+---
+
+**Checkpoint v4.7**: Workflow multi-documento con integrazione intelligente.
+
+Fix v4.7 (multi-documento):
+- Aggiunto: supporto sbobine multiple sullo stesso argomento
+- Nuova Fase 0: analisi scope fonti, overlap/complementare/conflitti, pesi integrazione
+- Auto-start: anche per 2+ documenti (rileva argomento comune, avvia Fase 0)
+- Scratchpad esteso: tracking fonti, piano_integrazione con pesi per H2
+- Fase 1 modificata: modalità singola vs multi-fonte, traccia integrata con note pesi
+- Fase 2 modificata: integrazione proporzionale secondo pesi, risoluzione conflitti automatica
+- Timing Gruppo A: ~35-50 min (include Fase 0 opzionale 3-5 min)
+- Esempio: melanoma da Plastica (focus terapia) + Dermatologia (focus clinica) → traccia unica integrata
 
 ---
 

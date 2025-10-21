@@ -1,4 +1,4 @@
-# Orchestrator - Sistema Studio Medicina (v4.6)
+# Orchestrator - Sistema Studio Medicina (v4.8)
 
 > **Nota**: Questo orchestrator usa automaticamente le Custom Instructions del progetto:
 > - **CCI**: main message first, frasi ≤18 parole, numeri con unità, voce attiva
@@ -156,8 +156,7 @@ Fase 6: Anki deck (5-8 min)
 ```
 Gruppo B completato - Anki pronto
 
-File generato: anki_deck.txt
-Carte CORE: [N]/25 con anti-confusori applicati
+File: [nome_argomento]_anki.txt ([N] carte)
 
 Digita 'continua' per aggiornare proprietà database o 'ferma' per terminare.
 ```
@@ -546,16 +545,22 @@ Nota: H3 ha 1 TAB prima di ▶### per stare dentro H2
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[ID]",
-  "command": "replace_content",
-  "new_str": "[contenuto formato Notion con toggle, callout, indentazione]"
+  "data": {
+    "page_id": "[ID]",
+    "command": "replace_content",
+    "new_str": "[contenuto formato Notion con toggle, callout, indentazione]"
+  }
 }
 ```
 
-**Output**:
+**Critical - NO output contenuto**:
+- NON stampare il contenuto generato in chat
+- NON stampare paragrafi, callout, domande
+- Genera tutto INTERNAMENTE e pubblica direttamente su Notion
+
+**Output minimal**:
 ```
-Pagina pubblicata: [URL]
-[N] parole | CCI: PASS (frasi >18: <10%) | Callout: [N] (red:[N] | blue:[N] | green:[N])
+Contenuto pubblicato su Notion: [N] parole, [N] callout inseriti.
 ```
 
 **Procedi immediatamente** (oneshot attivo):
@@ -676,9 +681,13 @@ Usa `notion-append-block` o `notion-insert-block`:
 }
 ```
 
-**Output**:
+**Critical - NO output diagramma**:
+- NON stampare il codice Mermaid in chat
+- Genera INTERNAMENTE e inserisci direttamente su Notion
+
+**Output minimal**:
 ```
-Diagramma inserito: [tipo] ([N] nodi)
+Diagramma inserito su Notion.
 ```
 
 **Procedi immediatamente** (oneshot attivo):
@@ -692,9 +701,15 @@ Diagramma inserito: [tipo] ([N] nodi)
 
 **Input**: Pagina Notion pubblicata
 
-## Step 4.1: Genera pitch
+## Step 4.1: Genera pitch INTERNAMENTE
 
-**Regole**:
+**Critical - Generazione interna**:
+- Genera pitch internamente (NO output in chat)
+- Valida lunghezza internamente (170-200 parole)
+- Se <170 o >200 parole → autocorreggi a ~185 parole
+- Calcola SOLO, non stampare
+
+**Regole pitch**:
 - Lunghezza: 170-200 parole esatte
 - Modalità:
   - Singola: Cos'è + Perché importante + Come gestire
@@ -702,27 +717,31 @@ Diagramma inserito: [tipo] ([N] nodi)
 - Stile: CCI, frasi 12-15 parole
 - **UNA frase in grassetto** (mossa decisiva): usa **testo** per grassetto Markdown
 
-**Validazione interna**: se <170 o >200 parole → autocorreggi a ~185 parole
-
-## Step 4.2: Update properties
+## Step 4.2: Update properties (diretto su Notion)
 
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[page_id]",
-  "command": "update_properties",
-  "properties": {
-    "Pitch": "[testo normale **testo grassetto** resto testo]",
-    "Status argomento": "Attivo"
+  "data": {
+    "page_id": "[page_id]",
+    "command": "update_properties",
+    "properties": {
+      "Pitch": "[testo normale **testo grassetto** resto testo]",
+      "Status argomento": "Attivo"
+    }
   }
 }
 ```
 
 Critical: Notion mantiene il grassetto ** ** nella property text Pitch
 
-**Output**:
+**Critical - NO output pitch**:
+- NON stampare il pitch in chat
+- Aggiorna proprietà Notion direttamente
+
+**Output minimal**:
 ```
-Pitch inserito: [N] parole | Status: Attivo
+Proprietà aggiornate su Notion (Pitch + Status).
 ```
 
 **Procedi immediatamente** (oneshot attivo):
@@ -736,7 +755,12 @@ Pitch inserito: [N] parole | Status: Attivo
 
 **Input**: Pagina Notion pubblicata con contenuto completo
 
-## Step 5.1: Valutazione automatica
+## Step 5.1: Valutazione automatica INTERNA
+
+**Critical - Calcolo interno**:
+- Calcola complessità e tempo INTERNAMENTE (NO output in chat)
+- Usa formule sotto per calcolo
+- NON stampare score o calcoli intermedi
 
 **Complessità** (score):
 - Struttura: H2 (1pt), H3 (0.5pt), Domande (0.5pt)
@@ -754,36 +778,37 @@ Tempo = (H2 × 2.5) + (H3 × 1.5) + (Callout × 1) + (Domande × 0.5)
 Arrotonda a multiplo 5
 ```
 
-## Step 5.2: Update properties
+## Step 5.2: Update properties (diretto su Notion)
 
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[page_id]",
-  "command": "update_properties",
-  "properties": {
-    "Complessità": "[Semplice/Media/Complessa]",
-    "Tempo studio stimato": [numero]
+  "data": {
+    "page_id": "[page_id]",
+    "command": "update_properties",
+    "properties": {
+      "Complessità": "[Semplice/Media/Complessa]",
+      "Tempo studio stimato": [numero]
+    }
   }
 }
 ```
 
-**Output**:
+**Critical - NO output calcoli**:
+- NON stampare valori complessità/tempo in chat
+- Aggiorna proprietà Notion direttamente
+
+**Output minimal**:
 ```
-Complessità: [valore] | Tempo stimato: [N] min
+Proprietà aggiornate su Notion (Complessità + Tempo stimato).
 ```
 
 **Output finale Gruppo A**:
 ```
-Gruppo A completato - Contenuto studiabile
+Gruppo A completato - Contenuto pubblicato su Notion
 
-Pagina Notion pubblicata: [URL]
-
-Contenuto generato: [N] parole (CCI: PASS, frasi >18: <10%)
-Callout inseriti: [N] totali (red: [N], blue: [N], green: [N])
-Diagramma: [tipo] con [N] nodi
-Pitch: [N] parole, Status: Attivo
-Tempo stimato: [N] min (complessità: [valore])
+Pagina: [URL]
+[N] parole, [N] callout, diagramma inserito, proprietà aggiornate.
 
 Digita 'continua' per generare Anki o 'ferma' per terminare.
 ```
@@ -827,24 +852,28 @@ Nel diabete tipo 2 senza insufficienza renale, il farmaco di prima linea è {{c1
 
 **Output file**:
 
-Genera file `anki_deck.txt` nel progetto:
+**Critical - Nome file dinamico**:
+- Nome file: `[nome_argomento]_anki.txt` (usa titolo da scratchpad)
+- Esempio: "Sifilide_anki.txt", "Melanoma_cutaneo_anki.txt"
+- Sostituisci spazi con underscore, lowercase
+
+Genera file nel progetto:
 ```
 [Stem con {{c1::risposta}}]
 [Stem con {{c1::risposta}}]
 [...max 25 linee]
 ```
 
-**Output chat**:
+**Output chat minimal**:
 ```
-File generato: anki_deck.txt ([N] carte CORE)
+File Anki generato: [nome_argomento]_anki.txt ([N] carte)
 ```
 
 **Output finale Gruppo B**:
 ```
 Gruppo B completato - Anki pronto
 
-File generato: anki_deck.txt
-Carte CORE: [N]/25 con anti-confusori applicati
+File: [nome_argomento]_anki.txt ([N] carte)
 
 Digita 'continua' per aggiornare proprietà database o 'ferma' per terminare.
 ```
@@ -897,10 +926,12 @@ Estrai 2-3 termini per categoria:
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[page_id]",
-  "command": "update_properties",
-  "properties": {
-    "Voci": "[\"url1\", \"url2\", ...]"
+  "data": {
+    "page_id": "[page_id]",
+    "command": "update_properties",
+    "properties": {
+      "Voci": "[\"url1\", \"url2\", ...]"
+    }
   }
 }
 ```
@@ -985,10 +1016,12 @@ Per ogni candidato con score ≥2:
 Usa `notion-update-page`:
 ```json
 {
-  "page_id": "[page_id_corrente]",
-  "command": "update_properties",
-  "properties": {
-    "Argomenti correlati": "[\"url_candidato1\", \"url_candidato2\", ...]"
+  "data": {
+    "page_id": "[page_id_corrente]",
+    "command": "update_properties",
+    "properties": {
+      "Argomenti correlati": "[\"url_candidato1\", \"url_candidato2\", ...]"
+    }
   }
 }
 ```
@@ -1162,6 +1195,22 @@ Property "Argomenti correlati" aggiornata su [N] pagine originali.
 | **Frasi** | ≤18 parole | Sentence complexity (threshold rigido) |
 | **Pitch** | 170-200 parole | Elevator pitch standard |
 | **Diagramma nodi** | ≤11 | Visual clarity |
+
+---
+
+**Checkpoint v4.8**: Output diretto su Notion + API fix.
+
+Fix v4.8 (output diretto + API):
+- Fix critical API: aggiunto wrapper "data" obbligatorio per tutte le chiamate notion-update-page (5 punti: Fase 2, 4, 5, 7, Link auto)
+- Output diretto su Notion: eliminati output intermedi in chat per contenuto, pitch, diagramma, complessità, tempo
+- Fase 2: genera contenuto INTERNAMENTE, pubblica direttamente su Notion (no stampa paragrafi/callout in chat)
+- Fase 3: genera diagramma INTERNAMENTE, inserisce direttamente su Notion (no stampa codice Mermaid)
+- Fase 4: genera pitch INTERNAMENTE, aggiorna proprietà Notion direttamente (no stampa pitch)
+- Fase 5: calcola complessità/tempo INTERNAMENTE, aggiorna proprietà Notion direttamente (no stampa calcoli)
+- Output Anki: nome file dinamico [nome_argomento]_anki.txt (es. "Sifilide_anki.txt")
+- Output finale Gruppo A: ridotto a conferma pubblicazione + URL + stats minimal
+- Output finale Gruppo B: ridotto a conferma file generato
+- Benefici: riduzione token chat, UX più pulita, tutto su Notion tranne Anki file scaricabile
 
 ---
 

@@ -449,6 +449,11 @@ Usa HTML inline per formattazione:
 - Grassetto: termini must-know, valori soglia, controindicazioni
 - Corsivo: specificazioni temporali/contestuali (fase acuta, nel neonato)
 
+**Altri esempi HTML nelle carte**:
+- "La dose di <b>epinefrina</b> nell'anafilassi è {{c1::<b>0.5 mg IM</b>}}"
+- "Nel paziente <i>pediatrico</i>, la dose è {{c1::0.01 mg/kg}}"
+- "Il criterio per <b><i>emergenza assoluta</i></b> è {{c1::PAS <90 mmHg}}"
+
 ##### Esempi Carte
 
 **❌ CATTIVE**:

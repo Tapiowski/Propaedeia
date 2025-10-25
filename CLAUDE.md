@@ -1,4 +1,4 @@
-# PROPAEDEIA - Sistema Studio Medicina v5.7
+# PROPAEDEIA - Sistema Studio Medicina v5.8
 
 ## 🎯 OVERVIEW
 
@@ -341,7 +341,7 @@ Genera contenuto CCI direttamente in formato Notion con:
 - Max 3 chiarimenti terminologici (<15 parole)
 - 1-2 tabelle comparative (se diagnosi differenziale)
 
-Pubblica con `replace_content`.
+Pubblica con tool `notion-update-page` usando `command: "replace_content"`.
 
 **Output minimal**: "Contenuto pubblicato: [N] parole, [N] callout, [N] domande integrate."
 
@@ -359,7 +359,7 @@ Inserisci direttamente su Notion.
 #### Fase 4: Pitch + Status
 
 Genera pitch 170-200 parole con **una frase grassetto**.
-Update properties: Pitch + Status="Attivo".
+Update properties con tool `notion-update-page`: Pitch + Status="Attivo".
 
 **Output minimal**: "Proprietà aggiornate (Pitch + Status)."
 
@@ -373,11 +373,11 @@ Calcola e aggiorna proprietà SEPARATE nel database Argomenti:
 
 **ATTENZIONE**: MAI toccare "Note claude" - riservata al progetto tutor!
 
-**API call**:
+**Chiamata notion-update-page**:
 ```json
 {
   "data": {
-    "page_id": "[ID]",
+    "page_id": "[PAGE_ID_ARGOMENTO]",
     "command": "update_properties",
     "properties": {
       "Complessità": {"select": {"name": "Media"}},
@@ -386,6 +386,7 @@ Calcola e aggiorna proprietà SEPARATE nel database Argomenti:
   }
 }
 ```
+**Tool da usare**: `notion-update-page`
 
 **Output finale Gruppo A**:
 ```
@@ -492,8 +493,8 @@ Digita 'continua' per database o 'ferma'.
 #### Fase 7: Proprietà Voci
 
 Estrai 2-3 termini per categoria.
-Crea/trova in DB Voci.
-Update property "Voci" con URLs.
+Usa `notion-search` per trovare voci esistenti o `notion-create-pages` per creare nuove voci nel DB Voci.
+Usa `notion-update-page` per aggiornare property "Voci" dell'argomento con relation IDs.
 
 **Output finale Gruppo C**:
 ```
@@ -619,20 +620,59 @@ Pagina "[Arg1] vs [Arg2]" creata: [URL]
 - **BLUE** (`light-bulb_blue.svg`): Principi fisiopatologici, meccanismi, paradossi
 - **GREEN** (`star_green.svg`): High-yield facts, criteri diagnostici, valori soglia
 
-### API Notion
+### API Notion - Connector e Tool
 
-**Wrapper obbligatorio**:
+#### Tool Disponibili
+- **notion-create-pages**: Crea nuove pagine nei database
+- **notion-update-page**: Aggiorna contenuto o proprietà pagine esistenti
+- **notion-fetch**: Legge schema database o contenuto pagina
+- **notion-search**: Cerca pagine esistenti nel workspace
+
+#### Formato Corretto per Operazioni
+
+**Creazione Pagina in Database**:
+```json
+{
+  "parent": {
+    "type": "data_source_id",
+    "data_source_id": "[DATA_SOURCE_ID]"
+  },
+  "properties": {...},
+  "children": [...]
+}
+```
+**IMPORTANTE**: Usare `data_source_id` come parent, NON `database_id`!
+
+**Aggiornamento Proprietà**:
 ```json
 {
   "data": {
-    "page_id": "[ID]",
+    "page_id": "[PAGE_ID]",
     "command": "update_properties",
-    "properties": {}
+    "properties": {...}
   }
 }
 ```
 
-**Retry**: 3x con backoff esponenziale
+**Sostituzione Contenuto**:
+```json
+{
+  "data": {
+    "page_id": "[PAGE_ID]",
+    "command": "replace_content",
+    "children": [...]
+  }
+}
+```
+
+#### Note Tecniche Importanti
+
+1. **Parent per creazione**: Usare sempre `data_source_id` quando si creano pagine in un database (NON `database_id`)
+2. **Properties update**: Richiede sempre wrapper `{"data": {"page_id": "...", "command": "update_properties", "properties": {...}}}`
+3. **Retry logic**: Implementare 3x retry con backoff esponenziale per affidabilità
+4. **Note Claude**: La proprietà "Note Claude" nel DB Argomenti è **esclusivamente** per il progetto tutor - non toccare!
+5. **URL alternativi**: I tool accettano sia ID completi che URL Notion, ma gli ID sono più affidabili
+6. **Tool naming**: Usa sempre i nomi corretti dei tool (`notion-create-pages`, `notion-update-page`, `notion-fetch`, `notion-search`)
 
 ---
 
@@ -654,20 +694,59 @@ Pagina "[Arg1] vs [Arg2]" creata: [URL]
 | **Pitch** | 170-200 | Con 1 grassetto |
 | **Diagramma** | ≤11 nodi | Per chiarezza |
 
-### Database IDs
+### Database IDs e Riferimenti
 
-| Database | ID | URL |
-|----------|-----|-----|
-| **Argomenti** | `1b528251-9c2c-8039-bc38-cbb41d1767d3` | https://www.notion.so/1b5282519c2c8039bc38cbb41d1767d3 |
-| **Voci** | `29028251-9c2c-801e-a214-d30b803c78f8` | https://www.notion.so/290282519c2c801ea214d30b803c78f8 |
-| **Corso** | `5f805d0c-1d01-48b0-8678-f99531187725` | https://www.notion.so/5f805d0c1d0148b08678f99531187725 |
+#### Database Argomenti
+- **Database ID**: `1b528251-9c2c-8039-bc38-cbb41d1767d3`
+- **Data Source ID**: `1b528251-9c2c-8065-a61e-000bfdfab7c7`
+- **URL**: https://www.notion.so/1b5282519c2c8039bc38cbb41d1767d3
 
 **Properties chiave**:
-- Argomenti: "Nome", "Esame", "Modulo", "Status argomento", "Pitch", "Complessità" (select), "Tempo studio stimato" (number)
-- Voci: "Categoria" (Eziologia/Clinica/Diagnosi/Terapia)
-- Corso: [da verificare tramite API quando necessario]
+- `Nome` (title) - Titolo dell'argomento
+- `Status argomento` (status) - Nuovo/Attivo/Attivo+1/Attivo+7/Stabile
+- `Pitch` (text) - Descrizione 170-200 parole
+- `Complessità` (select) - Semplice/Media/Complessa
+- `Tempo studio stimato` (number) - Minuti stimati
+- `Voci` (relation) - Collegamenti a DB Voci
+- `Modulo` (relation) - Collegamenti a DB Corso
+- **⚠️ Note Claude** (text) - **NON MODIFICARE** - riservata al progetto tutor
 
-**⚠️ IMPORTANTE**: MAI modificare "Note claude" - riservata esclusivamente al progetto tutor!
+#### Database Voci
+- **Database ID**: `29028251-9c2c-801e-a214-d30b803c78f8`
+- **Data Source ID**: `29028251-9c2c-8024-bd71-000bcc303592`
+- **URL**: https://www.notion.so/290282519c2c801ea214d30b803c78f8
+
+**Properties chiave**:
+- `Nome` (title) - Termine medico
+- `Categoria` (multi_select) - Eziologia/Clinica/Diagnosi/Terapia
+- `Argomento` (relation) - Collegamenti a DB Argomenti
+- `Note` (text) - Descrizione/definizione
+
+#### Database Corso
+- **Database ID**: `5f805d0c-1d01-48b0-8678-f99531187725`
+- **Data Source ID**: `9b1f0358-b4ac-41a5-9a41-c3bc1aba492c`
+- **URL**: https://www.notion.so/5f805d0c1d0148b08678f99531187725
+
+**Properties chiave**:
+- `Modulo` (title) - Nome del modulo/corso
+- `Esame` (select) - Nome esame di appartenenza
+- `Status` (status) - Da sostenere/Prossimo esame/Superato
+- `Anno` (select) - 1/2/3/4/5/6
+- `Data` (date) - Data dell'esame
+- `Voto` (number) - Voto conseguito
+- `Argomenti` (relation) - Collegamenti a DB Argomenti
+
+#### Guida Rapida Operazioni
+
+| Operazione | Tool | ID da usare | Esempio |
+|-----------|------|-------------|---------|
+| **Creare pagina in Argomenti** | `notion-create-pages` | `data_source_id` | `parent: {type: "data_source_id", data_source_id: "1b528251-9c2c-8065-a61e-000bfdfab7c7"}` |
+| **Creare voce in Voci** | `notion-create-pages` | `data_source_id` | `parent: {type: "data_source_id", data_source_id: "29028251-9c2c-8024-bd71-000bcc303592"}` |
+| **Aggiornare contenuto pagina** | `notion-update-page` | `page_id` | Ottenuto da `notion-search` o fetch precedente |
+| **Aggiornare proprietà** | `notion-update-page` | `page_id` | Usa `command: "update_properties"` |
+| **Leggere schema database** | `notion-fetch` | `database_id` | Ritorna struttura completa con data sources |
+| **Leggere contenuto pagina** | `notion-fetch` | `page_id` | Ritorna markdown della pagina |
+| **Cercare pagine esistenti** | `notion-search` | N/A | `query_type: "internal"`, poi usa risultati |
 
 ### Comandi Rapidi
 
@@ -733,7 +812,8 @@ La CCPDMA (controllo completo circonferenziale di margini e fondo) è una tecnic
 
 **❌ ERRATO - Creare pagina Notion per Anki**:
 ```python
-notion_create_page(title="Anki Cards", content=carte)
+# NON usare notion-create-pages per le carte Anki!
+# Le carte devono essere salvate come file locale
 ```
 
 **✅ CORRETTO - File locale nel progetto**:
@@ -786,6 +866,7 @@ Prima di pubblicare contenuto, verificare:
 
 ## 📝 CHANGELOG
 
+- **v5.8**: API NOTION CONNECTOR - Aggiornamento completo per uso con web/app Claude. Aggiunti data_source_id per ogni database, corretti nomi tool (notion-create-pages, notion-update-page, etc.), guida operazioni rapide, note tecniche per connector
 - **v5.7**: PATH GENERICO ANKI - Rimosso path specifico `/mnt/user-data/outputs/`. File Anki salvati nel working directory del progetto con nome `[argomento]_anki.txt`
 - **v5.6**: RECUPERO REGOLE ANKI - Reinserite regole complete creazione carte (formato c1, atomicità, testabilità, high-yield). Aggiunti esempi carte buone/cattive. Fix anti-confusori sistematici
 - **v5.5**: FIX CRITICO STILE - Chiarito che frasi 12-18 parole sono per prosa normale, <15 SOLO per definizioni. Specificato output Anki come file locale. Nuova sezione Anti-pattern con esempi errori comuni
@@ -802,4 +883,4 @@ Prima di pubblicare contenuto, verificare:
 
 ---
 
-*Propaedeia v5.7 - Sistema ottimizzato con path file generici*
+*Propaedeia v5.8 - Sistema con API Notion Connector per web/app Claude*

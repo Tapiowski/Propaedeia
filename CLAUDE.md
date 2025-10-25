@@ -1,4 +1,4 @@
-# PROPAEDEIA - Sistema Studio Medicina v5.6
+# PROPAEDEIA - Sistema Studio Medicina v5.7
 
 ## 🎯 OVERVIEW
 
@@ -403,10 +403,10 @@ Digita 'continua' per Anki o 'ferma'.
 
 #### Fase 6: Anki Deck
 
-**⚠️ OUTPUT CRITICO**: Salvare come **FILE LOCALE**, NON su Notion!
+**⚠️ OUTPUT CRITICO**: Salvare come **FILE LOCALE** nel progetto, NON su Notion!
 
-**Path completo**: `/mnt/user-data/outputs/[nome_argomento]_anki.txt`
-**Usa**: Tool `Write` per creare il file locale
+**Nome file**: `[nome_argomento]_anki.txt`
+**Usa**: Tool `Write` per creare il file nel working directory del progetto
 
 ##### Regole Creazione Carte (max 25)
 
@@ -469,8 +469,8 @@ Digita 'continua' per Anki o 'ferma'.
 
 **Esempio creazione file**:
 ```python
-# CORRETTO: File locale
-Write(file_path="/mnt/user-data/outputs/Sifilide_anki.txt", content=carte_anki)
+# CORRETTO: File locale nel progetto
+Write(file_path="Sifilide_anki.txt", content=carte_anki)
 
 # ERRATO: NON usare Notion per Anki!
 # notion_create_page() ❌
@@ -736,9 +736,9 @@ La CCPDMA (controllo completo circonferenziale di margini e fondo) è una tecnic
 notion_create_page(title="Anki Cards", content=carte)
 ```
 
-**✅ CORRETTO - File locale in /mnt/user-data/outputs/**:
+**✅ CORRETTO - File locale nel progetto**:
 ```python
-Write(file_path="/mnt/user-data/outputs/Sifilide_anki.txt", content=carte)
+Write(file_path="Sifilide_anki.txt", content=carte)
 ```
 
 #### 4. **Chiarimenti Eccessivi**
@@ -778,7 +778,7 @@ Prima di pubblicare contenuto, verificare:
 ✅ **Frasi**: 12-18 parole per testo normale
 ✅ **Definizioni**: <15 parole SOLO per chiarimenti tra parentesi
 ✅ **Paragrafi**: 2-4 frasi ben connesse
-✅ **Anki**: Salvato in `/mnt/user-data/outputs/`, NON su Notion
+✅ **Anki**: Salvato come file locale .txt nel progetto, NON su Notion
 ✅ **Chiarimenti**: SOLO termini specialistici, MAI lessico base
 ✅ **Callout**: Mantenere indentazione corretta per i toggle
 
@@ -786,8 +786,9 @@ Prima di pubblicare contenuto, verificare:
 
 ## 📝 CHANGELOG
 
+- **v5.7**: PATH GENERICO ANKI - Rimosso path specifico `/mnt/user-data/outputs/`. File Anki salvati nel working directory del progetto con nome `[argomento]_anki.txt`
 - **v5.6**: RECUPERO REGOLE ANKI - Reinserite regole complete creazione carte (formato c1, atomicità, testabilità, high-yield). Aggiunti esempi carte buone/cattive. Fix anti-confusori sistematici
-- **v5.5**: FIX CRITICO STILE - Chiarito che frasi 12-18 parole sono per prosa normale, <15 SOLO per definizioni. Aggiunto path completo Anki `/mnt/user-data/outputs/`. Nuova sezione Anti-pattern con esempi errori comuni
+- **v5.5**: FIX CRITICO STILE - Chiarito che frasi 12-18 parole sono per prosa normale, <15 SOLO per definizioni. Specificato output Anki come file locale. Nuova sezione Anti-pattern con esempi errori comuni
 - **v5.4**: Elementi didattici obbligatori - domande integrate, confronti comparativi, mnemonici, chiarimenti terminologici
 - **v5.3**: FIX CRITICO - Separazione proprietà "Complessità" e "Tempo studio stimato", protezione "Note claude" per progetto tutor
 - **v5.2**: Fix CRITICO indentazione callout + correzione Database IDs + aggiunto DB Corso
@@ -801,4 +802,4 @@ Prima di pubblicare contenuto, verificare:
 
 ---
 
-*Propaedeia v5.6 - Sistema completo con regole Anki dettagliate*
+*Propaedeia v5.7 - Sistema ottimizzato con path file generici*

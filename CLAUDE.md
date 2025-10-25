@@ -1,4 +1,4 @@
-# PROPAEDEIA - Sistema Studio Medicina v5.5
+# PROPAEDEIA - Sistema Studio Medicina v5.6
 
 ## 🎯 OVERVIEW
 
@@ -181,7 +181,7 @@ Inserisci **5-7 domande** distribuite nel testo per stimolare riflessione attiva
 
 #### Confronti Comparativi
 
-Quando tratti patologie simili o diagnosi differenziale, inserisci **tabelle comparative strutturate**.
+Quando tratti patologie simili o diagnosi differenziale, inserisci **tabelle comparative strutturate** propriamente indentate.
 
 **Esempio BCC vs SCC**:
 | Aspetto | BCC | SCC |
@@ -405,14 +405,67 @@ Digita 'continua' per Anki o 'ferma'.
 
 **⚠️ OUTPUT CRITICO**: Salvare come **FILE LOCALE**, NON su Notion!
 
-Genera max 25 carte CORE con anti-confusori.
 **Path completo**: `/mnt/user-data/outputs/[nome_argomento]_anki.txt`
 **Usa**: Tool `Write` per creare il file locale
 
-**Anti-confusori**:
+##### Regole Creazione Carte (max 25)
+
+**1. Formato Obbligatorio**:
+- **SOLO Cloze deletion con {{c1::}}** (mai c2, c3, c4...)
+- **Una carta per riga** nel file .txt
+- **UTF-8 encoding** per caratteri speciali
+
+**2. Atomicità**:
+- **1 concetto/card** (NO listing cards tipo "cause: A, B, C")
+- Se multipli elementi → carte separate per ciascuno
+- Preferire carte specifiche a carte generali
+
+**3. Testabilità**:
+- **Stem rispondibile anche a cloze chiusa**
+- Includere contesto sufficiente per risposta univoca
+- Evitare ambiguità ("il farmaco di prima linea" → specificare per cosa)
+
+**4. High-Yield Content**:
+- **Definizioni** patognomoniche e must-know
+- **Criteri diagnostici** essenziali (valori soglia, timing)
+- **Terapie first-line** con indicazioni specifiche
+- **Red flags** e complicanze life-threatening
+- **Valori numerici** clinicamente rilevanti
+
+**5. Anti-Confusori Sistematici**:
 - Età: "nel *neonato*" vs "nell'*adulto*"
 - Tempo: "fase *acuta*" vs "fase *cronica*"
-- Gravità: "*intermittente*" vs "*grave*"
+- Gravità: "*lieve*" vs "*grave*", "*intermittente*" vs "*persistente*"
+- Contesto: "in *gravidanza*" vs "nel *paziente anziano*"
+
+##### Esempi Carte
+
+**❌ CATTIVE**:
+```
+"Le complicanze del diabete includono {{c1::nefropatia, retinopatia, neuropatia}}."
+→ Listing card, troppo ampia, non atomica
+
+"Il farmaco di prima linea è {{c1::metformina}}."
+→ Ambigua (per cosa? in che contesto?)
+
+"La sifilide {{c1::è causata dal Treponema pallidum}}."
+→ Troppo ovvia, basso valore didattico
+```
+
+**✅ BUONE**:
+```
+"La principale causa di cecità nel diabete tipo 2 è {{c1::retinopatia diabetica}}."
+→ Atomica, clinicamente rilevante, stem univoco
+
+"Nel diabete tipo 2 *senza* insufficienza renale, il farmaco di prima linea è {{c1::metformina}}."
+→ Stem univoco con micro-cue contestuale
+
+"Il tempo medio di comparsa del sifiloma dopo l'esposizione è {{c1::21 giorni}} (range 10-90)."
+→ Valore numerico preciso, clinicamente utile
+
+"Nella sifilide *congenita precoce*, il segno più specifico è {{c1::ragadi periorali (segno di Parrot)}}."
+→ Anti-confusore temporale, finding patognomonico
+```
 
 **Esempio creazione file**:
 ```python
@@ -733,6 +786,7 @@ Prima di pubblicare contenuto, verificare:
 
 ## 📝 CHANGELOG
 
+- **v5.6**: RECUPERO REGOLE ANKI - Reinserite regole complete creazione carte (formato c1, atomicità, testabilità, high-yield). Aggiunti esempi carte buone/cattive. Fix anti-confusori sistematici
 - **v5.5**: FIX CRITICO STILE - Chiarito che frasi 12-18 parole sono per prosa normale, <15 SOLO per definizioni. Aggiunto path completo Anki `/mnt/user-data/outputs/`. Nuova sezione Anti-pattern con esempi errori comuni
 - **v5.4**: Elementi didattici obbligatori - domande integrate, confronti comparativi, mnemonici, chiarimenti terminologici
 - **v5.3**: FIX CRITICO - Separazione proprietà "Complessità" e "Tempo studio stimato", protezione "Note claude" per progetto tutor
@@ -747,4 +801,4 @@ Prima di pubblicare contenuto, verificare:
 
 ---
 
-*Propaedeia v5.5 - Sistema con validazione stile migliorata*
+*Propaedeia v5.6 - Sistema completo con regole Anki dettagliate*

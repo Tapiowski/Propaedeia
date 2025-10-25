@@ -434,10 +434,10 @@ Digita 'continua' per Anki o 'ferma'.
 - **Valori numerici** clinicamente rilevanti
 
 **5. Anti-Confusori Sistematici**:
-- Età: "nel *neonato*" vs "nell'*adulto*"
-- Tempo: "fase *acuta*" vs "fase *cronica*"
-- Gravità: "*lieve*" vs "*grave*", "*intermittente*" vs "*persistente*"
-- Contesto: "in *gravidanza*" vs "nel *paziente anziano*"
+- Età: "nel <i>neonato</i>" vs "nell'<i>adulto</i>"
+- Tempo: "fase <i>acuta</i>" vs "fase <i>cronica</i>"
+- Gravità: "<i>lieve</i>" vs "<i>grave</i>", "<i>intermittente</i>" vs "<i>persistente</i>"
+- Contesto: "in <i>gravidanza</i>" vs "nel <i>paziente anziano</i>"
 
 **6. Formattazione HTML**:
 Usa HTML inline per formattazione:
@@ -468,14 +468,14 @@ Usa HTML inline per formattazione:
 "La principale causa di cecità nel diabete tipo 2 è {{c1::retinopatia diabetica}}."
 → Atomica, clinicamente rilevante, stem univoco
 
-"Nel diabete tipo 2 *senza* insufficienza renale, il farmaco di prima linea è {{c1::metformina}}."
-→ Stem univoco con micro-cue contestuale
+"Nel diabete tipo 2 <i>senza</i> insufficienza renale, il farmaco di prima linea è {{c1::metformina}}."
+→ Stem univoco con micro-cue contestuale HTML
 
-"Il tempo medio di comparsa del sifiloma dopo l'esposizione è {{c1::21 giorni}} (range 10-90)."
-→ Valore numerico preciso, clinicamente utile
+"Il tempo medio di comparsa del sifiloma dopo l'esposizione è {{c1::<b>21 giorni</b>}} (range 10-90)."
+→ Valore numerico preciso in grassetto, clinicamente utile
 
-"Nella sifilide *congenita precoce*, il segno più specifico è {{c1::ragadi periorali (segno di Parrot)}}."
-→ Anti-confusore temporale, finding patognomonico
+"Nella sifilide <i>congenita precoce</i>, il segno più specifico è {{c1::ragadi periorali (segno di Parrot)}}."
+→ Anti-confusore temporale in corsivo, finding patognomonico
 
 "Nel BCC ad <i>alto rischio</i>, il margine chirurgico raccomandato è {{c1::<b>5-10 mm</b>}}."
 → Formattazione HTML: corsivo per contesto, grassetto per valore chiave

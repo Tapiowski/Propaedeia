@@ -1,4 +1,4 @@
-# PROPAEDEIA - Sistema Studio Medicina v5.4
+# PROPAEDEIA - Sistema Studio Medicina v5.5
 
 ## 🎯 OVERVIEW
 
@@ -121,18 +121,30 @@ link compare Sifilide Gonorrea
 - **Con focus=X**: Restringe a sottotema specifico
 - **Comparativo**: Includi sezione confronto strutturata
 
-### A2. Validazione CCI
+### A2. Validazione CCI e Stile Discorsivo
 
 #### Sistema Unificato
 
+**ATTENZIONE CRITICA - Stile Prosa Medica**:
+- **SEMPRE prosa fluida**: Scrivi paragrafi discorsivi con frasi ben connesse
+- **MAI elenchi puntati** nel corpo del testo (solo per tabelle/confronti)
+- **Frasi normali**: 12-18 parole per garantire fluidità e leggibilità
+- **Solo chiarimenti <15 parole**: UNICAMENTE per definizioni terminologiche tra parentesi
+
 **Durante generazione** (ogni H2):
-- Frasi ≤18 parole (threshold rigido)
+- Frasi 12-18 parole (range ottimale per prosa medica)
 - Main message in prime 1-2 frasi
 - Numeri sempre con unità
-- Paragrafi 2-4 frasi max
+- Paragrafi 2-4 frasi connesse logicamente
+
+**Esempio CORRETTO** (prosa fluida):
+"La sifilide primaria si manifesta con il sifiloma dopo un periodo di incubazione variabile. La lesione compare tipicamente tra 10 e 90 giorni dall'esposizione, con una media di 21 giorni. Il sifiloma si presenta come un'ulcera singola, indolore e a margini netti rilevati."
+
+**Esempio ERRATO** (stile telegrafico):
+"Sifilide primaria: sifiloma dopo incubazione. Comparsa: 10-90 giorni. Media 21 giorni. Ulcera singola indolore."
 
 **Autocorrezione**:
-- Se >20% frasi lunghe → riscrittura automatica (max 1 volta)
+- Se >20% frasi fuori range 12-18 → riscrittura automatica (max 1 volta)
 - Se fallisce ancora → STOP e segnala
 
 ### A3. Stile e Formattazione
@@ -195,13 +207,17 @@ Inserisci in **callout verde** per facilitare memorizzazione.
 
 #### Chiarimenti Terminologici (max 3 per pagina)
 
-**REGOLA CRITICA**: Chiarire SOLO termini specialistici NON del lessico medico base.
+**⚠️ REGOLA FONDAMENTALE**:
+- **Il limite <15 parole è SOLO per le definizioni tra parentesi**, NON per il testo normale!
+- **Il testo principale DEVE sempre essere prosa fluida con frasi 12-18 parole**
+- Chiarire SOLO termini specialistici NON del lessico medico base
 
 **Formati ammessi**:
-1. **Parentesi prima menzione** (preferito): "La CCPDMA (controllo completo circonferenziale di margini e fondo) permette..."
-2. **Apposizione inline**: "Il Vismodegib, inibitore SMO del pathway Hedgehog, è indicato..."
+1. **Parentesi prima menzione** (preferito): "La CCPDMA (controllo completo circonferenziale di margini e fondo) permette una valutazione istologica completa dei margini chirurgici."
+2. **Apposizione inline**: "Il Vismodegib, inibitore SMO del pathway Hedgehog, è indicato nei carcinomi basocellulari localmente avanzati."
 
-**Definizione**: < 15 parole, essenziale per comprensione.
+**Definizione parentetica**: < 15 parole, essenziale per comprensione
+**Frase contenente**: 12-18 parole, stile discorsivo normale
 
 **COSA CHIARIRE**:
 - **Acronimi specialistici**: CCPDMA, POMA, SMO, UTUC (NON: ECG, TAC, RM)
@@ -387,13 +403,25 @@ Digita 'continua' per Anki o 'ferma'.
 
 #### Fase 6: Anki Deck
 
+**⚠️ OUTPUT CRITICO**: Salvare come **FILE LOCALE**, NON su Notion!
+
 Genera max 25 carte CORE con anti-confusori.
-Nome file: `[nome_argomento]_anki.txt`
+**Path completo**: `/mnt/user-data/outputs/[nome_argomento]_anki.txt`
+**Usa**: Tool `Write` per creare il file locale
 
 **Anti-confusori**:
 - Età: "nel *neonato*" vs "nell'*adulto*"
 - Tempo: "fase *acuta*" vs "fase *cronica*"
 - Gravità: "*intermittente*" vs "*grave*"
+
+**Esempio creazione file**:
+```python
+# CORRETTO: File locale
+Write(file_path="/mnt/user-data/outputs/Sifilide_anki.txt", content=carte_anki)
+
+# ERRATO: NON usare Notion per Anki!
+# notion_create_page() ❌
+```
 
 **Output finale Gruppo B**:
 ```
@@ -564,11 +592,12 @@ Pagina "[Arg1] vs [Arg2]" creata: [URL]
 | **Callout** | 5-7 | Include max 2 mnemonici |
 | **H2 Pilastri** | 4-6 | Struttura base |
 | **Domande integrate** | 5-7 | Distribuite nel testo |
-| **Chiarimenti** | max 3 | Solo termini specialistici |
+| **Chiarimenti** | max 3 | Solo termini specialistici (<15 parole) |
 | **Mnemonici** | max 2 | In callout verdi |
 | **Tabelle comparative** | 1-2 | Se diagnosi differenziale |
 | **Anki** | max 25 | Override con n=X |
-| **Frasi** | ≤18 parole | Threshold rigido |
+| **Frasi normali** | 12-18 parole | Prosa fluida discorsiva |
+| **Definizioni** | <15 parole | SOLO per chiarimenti tra parentesi |
 | **Pitch** | 170-200 | Con 1 grassetto |
 | **Diagramma** | ≤11 nodi | Per chiarezza |
 
@@ -616,8 +645,95 @@ flowchart TB
 
 ---
 
+## ⛔ SEZIONE F: ANTI-PATTERN E ERRORI COMUNI
+
+### Errori Critici da Evitare
+
+#### 1. **Stile Telegrafico vs Prosa Fluida**
+
+**❌ ERRATO - Elenco telegrafico**:
+```
+Sifilide: infezione batterica.
+Agente: Treponema pallidum.
+Trasmissione: sessuale/verticale.
+Incubazione: 10-90 giorni.
+```
+
+**✅ CORRETTO - Prosa medica fluida**:
+```
+La sifilide è un'infezione batterica causata dal Treponema pallidum trasmessa principalmente per via sessuale. Il batterio può anche attraversare la placenta causando infezione congenita nel feto. Il periodo di incubazione varia tra 10 e 90 giorni con una media di 21 giorni.
+```
+
+#### 2. **Confusione Limiti di Parole**
+
+**❌ ERRATO - Applicare <15 parole a tutto**:
+```
+La CCPDMA è tecnica chirurgica. Permette controllo margini. Usata nei BCC.
+```
+
+**✅ CORRETTO - Solo definizioni <15, testo normale 12-18**:
+```
+La CCPDMA (controllo completo circonferenziale di margini e fondo) è una tecnica chirurgica microscopicamente controllata. Questa metodica permette la valutazione istologica completa dei margini di resezione. Viene utilizzata principalmente nel trattamento dei carcinomi basocellulari ad alto rischio.
+```
+
+#### 3. **Output File Anki**
+
+**❌ ERRATO - Creare pagina Notion per Anki**:
+```python
+notion_create_page(title="Anki Cards", content=carte)
+```
+
+**✅ CORRETTO - File locale in /mnt/user-data/outputs/**:
+```python
+Write(file_path="/mnt/user-data/outputs/Sifilide_anki.txt", content=carte)
+```
+
+#### 4. **Chiarimenti Eccessivi**
+
+**❌ ERRATO - Definire termini base**:
+```
+Le teleangectasie (dilatazioni vascolari) sono visibili...
+L'eritema (rossore) è presente nella fase acuta...
+```
+
+**✅ CORRETTO - Solo termini specialistici**:
+```
+Le teleangectasie sono visibili alla dermoscopia...
+La CCPDMA (controllo circonferenziale margini e fondo) garantisce...
+```
+
+#### 5. **Struttura Paragrafi**
+
+**❌ ERRATO - Frasi isolate senza connessione**:
+```
+Il sifiloma è indolore.
+Compare dopo 21 giorni.
+Altamente contagioso.
+Guarisce spontaneamente.
+```
+
+**✅ CORRETTO - Paragrafi 2-4 frasi connesse**:
+```
+Il sifiloma è caratteristicamente indolore nonostante si presenti come un'ulcera. La lesione compare mediamente dopo 21 giorni dall'esposizione ed è altamente contagiosa. Anche senza trattamento, il sifiloma guarisce spontaneamente in 3-6 settimane.
+```
+
+### Checklist Pre-Pubblicazione
+
+Prima di pubblicare contenuto, verificare:
+
+✅ **Stile**: Prosa fluida, NON elenchi puntati
+✅ **Frasi**: 12-18 parole per testo normale
+✅ **Definizioni**: <15 parole SOLO per chiarimenti tra parentesi
+✅ **Paragrafi**: 2-4 frasi ben connesse
+✅ **Anki**: Salvato in `/mnt/user-data/outputs/`, NON su Notion
+✅ **Chiarimenti**: SOLO termini specialistici, MAI lessico base
+✅ **Callout**: Mantenere indentazione corretta per i toggle
+
+---
+
 ## 📝 CHANGELOG
 
+- **v5.5**: FIX CRITICO STILE - Chiarito che frasi 12-18 parole sono per prosa normale, <15 SOLO per definizioni. Aggiunto path completo Anki `/mnt/user-data/outputs/`. Nuova sezione Anti-pattern con esempi errori comuni
 - **v5.4**: Elementi didattici obbligatori - domande integrate, confronti comparativi, mnemonici, chiarimenti terminologici
 - **v5.3**: FIX CRITICO - Separazione proprietà "Complessità" e "Tempo studio stimato", protezione "Note claude" per progetto tutor
 - **v5.2**: Fix CRITICO indentazione callout + correzione Database IDs + aggiunto DB Corso
@@ -631,4 +747,4 @@ flowchart TB
 
 ---
 
-*Propaedeia v5.4 - Sistema didattico potenziato*
+*Propaedeia v5.5 - Sistema con validazione stile migliorata*

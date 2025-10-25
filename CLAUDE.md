@@ -439,6 +439,16 @@ Digita 'continua' per Anki o 'ferma'.
 - Gravità: "*lieve*" vs "*grave*", "*intermittente*" vs "*persistente*"
 - Contesto: "in *gravidanza*" vs "nel *paziente anziano*"
 
+**6. Formattazione HTML**:
+Usa HTML inline per formattazione:
+- **Grassetto**: `<b>termine</b>` per concetti chiave
+- **Corsivo**: `<i>specifiche</i>` per contestualizzazioni
+- **Entrambi**: `<b><i>enfasi massima</i></b>` se necessario
+
+**Quando usare**:
+- Grassetto: termini must-know, valori soglia, controindicazioni
+- Corsivo: specificazioni temporali/contestuali (fase acuta, nel neonato)
+
 ##### Esempi Carte
 
 **❌ CATTIVE**:
@@ -466,12 +476,16 @@ Digita 'continua' per Anki o 'ferma'.
 
 "Nella sifilide *congenita precoce*, il segno più specifico è {{c1::ragadi periorali (segno di Parrot)}}."
 → Anti-confusore temporale, finding patognomonico
+
+"Nel BCC ad <i>alto rischio</i>, il margine chirurgico raccomandato è {{c1::<b>5-10 mm</b>}}."
+→ Formattazione HTML: corsivo per contesto, grassetto per valore chiave
 ```
 
 **Esempio creazione file**:
 ```python
-# CORRETTO: File locale nel progetto
+# CORRETTO: File locale nel progetto (.txt con HTML inline supportato)
 Write(file_path="Sifilide_anki.txt", content=carte_anki)
+# Il file resta .txt ma supporta tag HTML inline come <b>, <i>
 
 # ERRATO: NON usare Notion per Anki!
 # notion_create_page() ❌
@@ -866,6 +880,7 @@ Prima di pubblicare contenuto, verificare:
 
 ## 📝 CHANGELOG
 
+- **v5.9**: FORMATTAZIONE HTML ANKI - Aggiunta regola 6 per formattazione HTML inline nelle carte Anki (.txt). Supporto tag `<b>`, `<i>` per enfasi concetti chiave e contestualizzazioni. File resta .txt con HTML inline
 - **v5.8**: API NOTION CONNECTOR - Aggiornamento completo per uso con web/app Claude. Aggiunti data_source_id per ogni database, corretti nomi tool (notion-create-pages, notion-update-page, etc.), guida operazioni rapide, note tecniche per connector
 - **v5.7**: PATH GENERICO ANKI - Rimosso path specifico `/mnt/user-data/outputs/`. File Anki salvati nel working directory del progetto con nome `[argomento]_anki.txt`
 - **v5.6**: RECUPERO REGOLE ANKI - Reinserite regole complete creazione carte (formato c1, atomicità, testabilità, high-yield). Aggiunti esempi carte buone/cattive. Fix anti-confusori sistematici
@@ -883,4 +898,4 @@ Prima di pubblicare contenuto, verificare:
 
 ---
 
-*Propaedeia v5.8 - Sistema con API Notion Connector per web/app Claude*
+*Propaedeia v5.9 - Sistema con API Notion Connector per web/app Claude*
